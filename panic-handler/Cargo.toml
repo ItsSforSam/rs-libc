@@ -1,0 +1,9 @@
+[package]
+name = "panic-handler"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+
+[features]
+abort = []
