@@ -3,5 +3,6 @@
         "libc",
         "repr",
         "rslibc"
-    ]
+    ],
+    "rust-analyzer.check.command": "clippy"
 }
