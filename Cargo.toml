@@ -34,5 +34,31 @@ panic = "abort"
 [lib]
 crate-type = ["cdylib","lib"]
 
+# === LINTS ===
 
+# Defaults are usually fine, but we sometimes want to be a little stricter
+# Lint levels should be done with care.
+# 
+# Forbid: This should be handled quickly and is easy to ensure, like documenting ensuring something is safe.
+#               and something that shouldn't span across multiple commits
+#
+# Warn  : Discouraged but has reasons to, should be cleaned up, silly mistakes
+#
+# Allow : A comment should always accompany explicitly allowing a lint project wide
 [workspace.lints.clippy]
+allow_attributes_without_reason = {level = "forbid"}
+undocumented_unsafe_blocks      = {level = "forbid"}
+multiple_unsafe_ops_per_block   = {level = "warn"}
+unnecessary_safety_comment      = {level = "warn"}
+unnecessary_safety_doc          = {level = "warn"}
+dbg_macro                       = {level = "warn" } # prevents dbg being apart of a release
+
+[workspace.lints.rust]
+non-ascii-idents               =  {level = "forbid"} # Why use non-ascii idents? Make it harder to use this code base?
+unsafe-op-in-unsafe-fn         =  {level = "forbid"} # Add
+redundant-imports              =  {level = "warn"}
+linker-messages                =  {level = "warn"}
+missing-debug-implementations  =  {level = "warn"}
+missing_docs                   =  {level = "warn"}
+redundant-lifetimes            =  {level = "warn"} # better use less life times when possible
+single-use-lifetimes           =  {level = "warn"}
