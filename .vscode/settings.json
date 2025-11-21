@@ -1,11 +1,14 @@
 {
     "cSpell.words": [
         "bindgen",
+        "globl",
         "libc",
         "repr",
         "rslibc",
         "syscall",
-        "unistd"
+        "unistd",
+        "syscalls"
+
     ],
     "rust-analyzer.check.command": "clippy",
     // https://github.com/bergercookie/asm-lsp#
