@@ -4,11 +4,10 @@ version.workspace = true
 edition.workspace = true
 publish = true
 [dependencies]
-
-panic-handler = {path = "panic-handler"}
+api           = {path = "api"}
 
 [workspace]
-members = ["crt0", "panic-handler", "utils"]
+members = ["crt0", "api", "api-sys", "utils", "build-utils","arch"]
 
 [build-dependencies]
 cc = "1.2.46"
@@ -17,7 +16,7 @@ version = "0.0.0"
 edition = "2024"
 publish = false
 [features]
-abort_on_panic = ["panic-handler/abort"]
+
 
 [profile.dev]
 panic = "abort"

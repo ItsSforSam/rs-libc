@@ -1,8 +1,18 @@
 {
     "cSpell.words": [
+        "bindgen",
         "libc",
         "repr",
-        "rslibc"
+        "rslibc",
+        "syscall",
+        "unistd"
     ],
-    "rust-analyzer.check.command": "clippy"
+    "rust-analyzer.check.command": "clippy",
+    // https://github.com/bergercookie/asm-lsp#
+    "asm-lsp": {
+    "command": "asm-lsp",
+    "filetypes": [
+        "asm", "s", "S"
+    ]
+}
 }

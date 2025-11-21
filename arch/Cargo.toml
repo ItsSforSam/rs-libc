@@ -1,0 +1,12 @@
+[package]
+name = "arch-meta"
+description = "Simply a meta package to deal with compiling asm"
+
+
+# [lints]
+# workspace = true
+[lib]
+path = ".meta.rs"
+
+[build-dependencies]
+cc = { version = "1.0", features = ["parallel"] }

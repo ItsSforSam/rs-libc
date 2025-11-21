@@ -1,9 +1,8 @@
 [package]
-name = "crt0"
+name = "api"
 version.workspace = true
 edition.workspace = true
 publish.workspace = true
 
 [dependencies]
-cfg-if = "1.0.4"
-[build-dependencies]
+api_sys = {path = "../api-sys"}
