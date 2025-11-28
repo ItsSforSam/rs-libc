@@ -1,6 +1,7 @@
 #![allow(unsafe_op_in_unsafe_fn, reason ="these are simply reexporting them under the C abi")]
+#![allow(clippy::missing_safety_doc, reason ="they are wrappers for the most part")]
 use core::ffi::c_long as long;
-use crate::arch::*;
+use crate::arch::current::*;
 
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn __syscall0(a:long)->long{
@@ -51,29 +52,33 @@ pub unsafe extern "C" fn __syscall6(a:long,b:long,c:long,d:long,e:long,f:long,g:
 #[macro_export]
 macro_rules! syscall {
     ($sc:expr) => {
-        $crate::arch::syscall0($sc)
+        $crate::arch::current::syscall0($sc)
     };
     ($sc:expr,$a:expr) => {
-        $crate::arch::syscall1($sc,$a)
+        $crate::arch::current::syscall1($sc,$a)
     };
     ($sc:expr,$a:expr,$b:expr) => {
-        $crate::arch::syscall2($sc,$a,$b,$c,$d,$e,$f)
+        $crate::arch::current::syscall2($sc,$a,$b)
     };
 
     ($sc:expr,$a:expr,$b:expr,$c:expr) => {
-        $crate::arch::syscall3($sc,$a,$b,$c,$d,$e,$f)
+        $crate::arch::current::syscall3($sc,$a,$b,$c)
     };
+
+    ($sc:expr,$a:expr,$b:expr,$c:expr,$d:expr) => {
+        $crate::arch::current::syscall4($sc,$a,$b,$c,$d)
+    };
+
 
     ($sc:expr,$a:expr,$b:expr,$c:expr,$d:expr,$e:expr) => {
-        $crate::arch::syscall4($sc,$a,$b,$c,$d,$e)
+        $crate::arch::current::syscall5($sc,$a,$b,$c,$d,$e)
     };
-
 
     ($sc:expr,$a:expr,$b:expr,$c:expr,$d:expr,$e:expr,$f:expr) => {
-        $crate::arch::syscall5($sc,$a,$b,$c,$d,$e,$f)
+        $crate::arch::current::syscall6($sc,$a,$b,$c,$d,$e,$f)
     };
-
-    ($sc:expr,$a:expr,$b:expr,$c:expr,$d:expr,$e:expr,$f:expr,$g:expr) => {
-        $crate::arch::syscall6($sc,$a,$b,$c,$d,$e,$f,$g)
-    };
+}
+#[doc(hidden)]
+pub fn __syscall_ret(ret:long)->long{
+    ret
 }
