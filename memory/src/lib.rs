@@ -9,6 +9,8 @@ extern crate alloc;
 
 use core::{ffi::c_void, num::NonZero, ptr::NonNull};
 
+use alloc::alloc::GlobalAlloc;
+
 
 #[derive(Debug)]
 pub struct Allocator{
@@ -47,9 +49,14 @@ struct Node{
     
 // }
 
+unsafe impl GlobalAlloc for Allocator{
+    unsafe fn alloc(&self, layout: core::alloc::Layout) -> *mut u8 {
+        todo!()
+    }
+    
+    unsafe fn dealloc(&self, ptr: *mut u8, layout: core::alloc::Layout) {
+        todo!()
+    }
 
-
-
-
-
+}
 
