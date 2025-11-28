@@ -8,13 +8,13 @@ use core::ffi::CStr;
 #[derive(Debug)]
 struct EnvVars{
 
-    data:Mutex<Vec<CStr>>
+    // data:alloc::collections::Mutex<alloc::vec::Vec<CStr>>
 }
 
 impl EnvVars{
     pub const fn new()->Self{
         EnvVars {
-            data: Vec::new()
+            // data: Vec::new()
         }
     }
 }

@@ -1,22 +1,14 @@
 //! Memory allocator for rslibc
 //! 
 //! This is one of the few crates that support 
-#![feature(reentrant_lock)]
 
 #![no_std]
-cfg_if::cfg_if!{
-    if #[cfg(feature="std")]{
-        extern crate std;
-        // extern crate libc as api;
-    }
 
-}
 extern crate alloc;
 
 
 use core::{ffi::c_void, num::NonZero, ptr::NonNull};
 
-use alloc::alloc::GlobalAlloc;
 
 #[derive(Debug)]
 pub struct Allocator{

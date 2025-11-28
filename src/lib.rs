@@ -4,3 +4,4 @@
 mod panicking;
 mod rt;
 pub mod env;
+extern crate alloc;

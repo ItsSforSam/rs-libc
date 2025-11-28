@@ -21,7 +21,7 @@ pub unsafe extern "C" fn syscall(_call:c_double,mut args:...) -> c_long{
     let d:c_long;
     let e:c_long;
     let f:c_long;
-
+    let g:c_long;
     // Safety: We may just clobber
     unsafe{
         a=args.arg();
@@ -30,6 +30,7 @@ pub unsafe extern "C" fn syscall(_call:c_double,mut args:...) -> c_long{
         d=args.arg();
         e=args.arg();
         f=args.arg();
+        g=args.arg();
 
         crate::arch::current::syscall6(a, b, c, d, e, f, g)
     }

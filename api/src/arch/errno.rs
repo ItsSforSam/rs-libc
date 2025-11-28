@@ -6,9 +6,10 @@ use api_sys as sys;
 macro_rules! def {
     ($($e:ident),*) => {
         #[derive(Debug,PartialEq,Eq)]
+        #[repr(u32)]
         pub enum Errno{
             $(
-                $e = ::api_sys::$e
+                $e = ::api_sys::$e,
             )*
         }
     };
@@ -56,7 +57,7 @@ def!(
     ENOSYS,
     ENOTEMPTY,
     ELOOP,
-    EWOULDBLOCK,
+    // EWOULDBLOCK,
     ENOMSG,
     EIDRM,
     ECHRNG,
@@ -73,7 +74,7 @@ def!(
     ENOANO,
     EBADRQC,
     EBADSLT,
-    EDEADLOCK,
+    // EDEADLOCK,
     EBFONT,
     ENOSTR,
     ENODATA,
@@ -148,8 +149,8 @@ def!(
     EOWNERDEAD,
     ENOTRECOVERABLE,
     ERFKILL,
-    EHWPOISON,
-    ENOTSUP
+    EHWPOISON
+    // ENOTSUP
 
 );
 // CSpell:enable
@@ -197,7 +198,7 @@ impl From<Errno> for &str{
             EPIPE => "Broken pipe",
             EDOM => "Numerical argument out of domain",
             ERANGE => "Numerical result out of range",
-            EDEADLK => "Resource deadlock avoided",
+            // EDEADLK => "Resource deadlock avoided",
             ENAMETOOLONG => "File name too long",
             ENOLCK => "No locks available",
             ENOSYS => "Function not implemented",
