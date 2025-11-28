@@ -1,10 +1,14 @@
 
 use core::panic::PanicInfo;
-pub extern "C-unwind" fn __panic_impl(){
 
+#[linkage = "weak"]
+#[unsafe(no_mangle)]
+pub extern "Rust" fn __panic_impl(_i:PanicInfo)->!{
+    todo!()
 }
 
-#[panic_handler]
-fn panic_handler(_info:&PanicInfo) ->!{
-    __panic_impl()
+#[cfg_attr(not(test),panic_handler)]
+#[cfg_attr(test, unused)]
+fn panic_handler(info:&PanicInfo) ->!{
+    __panic_impl(info)
 }
