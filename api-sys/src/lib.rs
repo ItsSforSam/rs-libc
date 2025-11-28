@@ -14,15 +14,14 @@
 
 //     }
 // }
-pub mod unistd{
-    include!(concat!(env!("OUT_DIR"),"/unistd.rs"));
-}
 
-pub mod syscall{
-    include!(concat!(env!("OUT_DIR"),"/syscall.rs"));
+include!(concat!(env!("OUT_DIR"),"/unistd.rs"));
+
+// pub mod syscall{
+//     include!(concat!(env!("OUT_DIR"),"/syscall.rs"));
 
     
-}
-// def_mod!(
+// }
+// // def_mod!(
 //     types
 // );

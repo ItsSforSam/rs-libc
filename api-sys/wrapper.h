@@ -1,2 +1,5 @@
 #include <asm/unistd.h>
-// #include <asm/syscall.h>
+#include <linux/errno.h>
+#include <sys/mman.h>
+#include <sys/syscall.h>
+#include <bits/syscall.h>

@@ -1,0 +1,19 @@
+[package]
+name = "memory"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[dependencies]
+cfg-if = "1.0.4"
+libc = {version = "0.2.177", optional = true}
+spin = {version = "0.10.0", default-features = false,features = ["lazy"]}
+
+[target.'cfg(not(feature="std"))'.dependencies]
+api  = {path = "../api"}
+[features]
+# This is 
+std = ["dep:libc"]
+[lints]
+workspace = true

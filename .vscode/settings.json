@@ -3,19 +3,23 @@
         "bindgen",
         "globl",
         "libc",
+        "MMAP",
         "repr",
         "rslibc",
         "syscall",
-        "unistd",
-        "syscalls"
-
+        "syscalls",
+        "unistd"
     ],
     "rust-analyzer.check.command": "clippy",
+    "rust-analyzer.cargo.features": ["std"],
+    
+    // "C_Cpp.default.includePath": ["./include"],
     // https://github.com/bergercookie/asm-lsp#
     "asm-lsp": {
     "command": "asm-lsp",
     "filetypes": [
         "asm", "s", "S"
     ]
+
 }
 }

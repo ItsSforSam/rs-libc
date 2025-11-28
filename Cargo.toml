@@ -6,9 +6,9 @@ license.workspace = true
 publish = true
 [dependencies]
 api           = {path = "api"}
-
+memory        = {path = "memory"}
 [workspace]
-members = ["crt0", "api", "api-sys", "utils", "build-utils","arch"]
+members = ["crt0", "api", "api-sys", "utils", "build-utils","arch", "memory"]
 
 
 [workspace.package]
