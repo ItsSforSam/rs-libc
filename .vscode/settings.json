@@ -11,7 +11,7 @@
         "unistd"
     ],
     "rust-analyzer.check.command": "clippy",
-    "rust-analyzer.cargo.features": ["std"],
+    // "rust-analyzer.cargo.features": ["std"],
     
     // "C_Cpp.default.includePath": ["./include"],
     // https://github.com/bergercookie/asm-lsp#
