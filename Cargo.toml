@@ -6,7 +6,9 @@ license.workspace = true
 publish = true
 [dependencies]
 api           = {path = "api"}
+bitflags = "2.10.0"
 memory        = {path = "memory"}
+unwind = "0.4.2"
 [workspace]
 members = ["crt0", "api", "api-sys", "utils", "build-utils","arch", "memory"]
 
