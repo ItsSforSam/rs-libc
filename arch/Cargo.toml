@@ -1,5 +1,6 @@
 [package]
 name = "arch-meta"
+edition.workspace = true
 description = "Simply a meta package to deal with compiling asm"
 
 
