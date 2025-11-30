@@ -3,7 +3,6 @@
 pub mod current;
 // #[path ="./common.rs"]
 pub mod common;
-pub mod errno;
 // Cannot use cause llvm bug with ebx reg
 // #[cfg(any(target_arch = "x86",target_arch="x86_64"))]
 // mod x86;
