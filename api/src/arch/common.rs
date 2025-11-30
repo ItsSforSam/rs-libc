@@ -1,6 +1,6 @@
 #![allow(unsafe_op_in_unsafe_fn, reason ="these are simply reexporting them under the C abi")]
 #![allow(clippy::missing_safety_doc, reason ="they are wrappers for the most part")]
-use core::ffi::c_long as long;
+use core::ffi::{c_long as long,c_ulong as ulong};
 use crate::arch::current::*;
 
 #[unsafe(no_mangle)]
@@ -52,33 +52,37 @@ pub unsafe extern "C" fn __syscall6(a:long,b:long,c:long,d:long,e:long,f:long,g:
 #[macro_export]
 macro_rules! syscall {
     ($sc:expr) => {
-        $crate::arch::current::syscall0($sc)
+        $crate::arch::common::__syscall_ret($crate::arch::current::syscall0($sc as _))
     };
     ($sc:expr,$a:expr) => {
-        $crate::arch::current::syscall1($sc,$a)
+        $crate::arch::common::__syscall_ret($crate::arch::current::syscall1($sc as _,$a as _))
     };
     ($sc:expr,$a:expr,$b:expr) => {
-        $crate::arch::current::syscall2($sc,$a,$b)
+        $crate::arch::common::__syscall_ret($crate::arch::current::syscall2($sc as _,$a as _,$b as _))
     };
 
     ($sc:expr,$a:expr,$b:expr,$c:expr) => {
-        $crate::arch::current::syscall3($sc,$a,$b,$c)
+        $crate::arch::common::__syscall_ret($crate::arch::current::syscall3($sc as _,$a as _,$b as _,$c as _))
     };
 
     ($sc:expr,$a:expr,$b:expr,$c:expr,$d:expr) => {
-        $crate::arch::current::syscall4($sc,$a,$b,$c,$d)
+        $crate::arch::common::__syscall_ret($crate::arch::current::syscall4($sc as _,$a as _,$b as _,$c as _,$d as _))
     };
 
 
     ($sc:expr,$a:expr,$b:expr,$c:expr,$d:expr,$e:expr) => {
-        $crate::arch::current::syscall5($sc,$a,$b,$c,$d,$e)
+        $crate::arch::common::__syscall_ret($crate::arch::current::syscall5($sc as _,$a as _,$b as _,$c as _,$d as _,$e as _))
     };
 
     ($sc:expr,$a:expr,$b:expr,$c:expr,$d:expr,$e:expr,$f:expr) => {
-        $crate::arch::current::syscall6($sc,$a,$b,$c,$d,$e,$f)
+        $crate::arch::common::__syscall_ret($crate::arch::current::syscall6($sc as _,$a as _,$b as _,$c as _,$d as _,$e as _,$f as _))
     };
 }
 #[doc(hidden)]
 pub fn __syscall_ret(ret:long)->long{
+    if ret > (-4096i64) {
+        unsafe{crate::errno::ERRNO = -ret};
+        return -1;
+    }
     ret
 }
