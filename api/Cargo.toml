@@ -6,3 +6,4 @@ publish.workspace = true
 
 [dependencies]
 api-sys = {path = "../api-sys"}
+bitflags = "2.10.0"
