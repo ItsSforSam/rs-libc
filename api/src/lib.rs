@@ -1,10 +1,12 @@
 #![no_std]
 #![feature(c_variadic)]
 #![feature(thread_local)]
-
+#![expect(internal_features, reason ="Uses abort intrinsic, which is safe")]
+#![feature(core_intrinsics)]
 use core::{ffi::va_list::VaList, mem};
+use api_sys::__pid_t;
 pub use api_sys as sys;
-use core::ffi::{self, c_double, c_long};
+use core::ffi::*;
 use bitflags::bitflags;
 
 #[macro_use]
@@ -112,9 +114,20 @@ pub extern "C" fn write(
         } 
 }
 
+/// Aborts by calling signal
+/// 
+/// Currently if it fails it calls an invalid instruction via rust's
+/// []
 fn abort()->!{
-    syscall!(api_sys::SYS_kill)
+    // @TODO: unmask signal 
+    kill(getpid(), api_sys::SIGABRT as _);
+
+    core::intrinsics::abort();
+    unreachable!("Abort function failed. Panicking");
 }
-fn getpid(){
-    unsafe {syscall!(api_sys::SYS_getpid)}
+fn getpid() -> api_sys::__pid_t{
+    unsafe {syscall!(api_sys::SYS_getpid) as _}
+}
+fn kill(pid:api_sys::__pid_t, sig:c_int)->c_int{
+   unsafe { syscall!(api_sys::SYS_kill,pid,sig) as _}
 }
