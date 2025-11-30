@@ -21,24 +21,29 @@ global_asm!{
     ".type _start, @function",
     "_start:",
         "endbr64",
-        "call __libc_start_main",
+        "call {libc_start}",
+        
+        "mov rdi, rax",
 
-    
-    "mov rax, 60",
-    "syscall"
+        "mov rax, 60",
+        "syscall",
     // Exits program
+    libc_start = sym start_main,
 }
 
 
+
 // SAFETY: No name clashes will occur
-#[unsafe(export_name = "__libc_start_main")]
+// #[unsafe(export_name = "__libc_start_main")]
+#[expect(clippy::not_unsafe_ptr_arg_deref, reason ="Argv is safe, trust me bro")]
 pub extern "C-unwind" fn start_main(argc:ffi::c_int, unbound_argv: *mut *mut ffi::c_char)->ffi::c_int{
     unsafe extern "C" {
         // Allows libc to call main as
-        fn main(argc:ffi::c_int, unbound_argv: *mut *mut ffi::c_char)-> ffi::c_char;
+        unsafe fn main(argc:ffi::c_int, argv: *mut *mut ffi::c_char)-> ffi::c_int;
         
     }
-    0
+    unsafe {main(argc,unbound_argv)}
+    
 }
 
 
