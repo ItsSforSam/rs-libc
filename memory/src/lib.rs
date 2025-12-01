@@ -7,7 +7,7 @@
 extern crate alloc;
 
 
-use core::fmt::Write;
+
 use core::{ffi::c_void, num::NonZero, ptr::NonNull};
 
 use alloc::alloc::{GlobalAlloc};
@@ -20,8 +20,8 @@ use core::ptr;
 pub struct Allocator{
 
     // This is a header
-    node:Option<*mut Node> // Null should be None, like NonNull but could be mutated
-
+    node:Option<*mut Node>, // Null should be None, like NonNull but could be mutated
+    // phantom:PhantomData<&mut Node>
 }
 #[derive(Debug)]
 struct Node{
@@ -107,13 +107,31 @@ unsafe impl GlobalAlloc for Allocator{
     }
 
 }
+/// An Allocation error has occurred
+/// 
+/// Usually used for reason of error.
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum AllocError{
-    OutOfMemory
+    /// System is out of memory.
+    /// 
+    /// This when not handled will be passed to the the oom handler which will panic
+    OutOfMemory,
+    /// Returned when size of 0 was passed to
+    /// 
+    /// This is effectively a no-op
+    TooSmall
 }
 impl core::fmt::Display for AllocError{
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.write_str("An Allocation error occurred")
+        use AllocError::*;
+        match self{
+            // These should not be relied upon for grep-ing
+            OutOfMemory => f.write_str("An allocation could not succeed. Out of memory"),
+            
+            TooSmall    => f.write_str("Size of zero was specified. No-allocation occurred"),
+        }
+        
     }
 }
 
