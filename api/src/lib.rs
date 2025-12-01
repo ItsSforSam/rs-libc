@@ -80,37 +80,37 @@ bitflags! {
 }
 
 pub fn mmap(
-    addr:*mut ffi::c_void,
+    addr:*mut c_void,
     size: usize, // size_t
     proto:MMapProt,
     flags: MMapFlags,
-    fd: ffi::c_int,
+    fd: c_int,
     offset:c_long
-)->*mut ffi::c_void{
+)->*mut c_void{
     
     const MMAP2:core::ffi::c_long = 192; // For some reason the sys crate isn't including
     // SYS_mmap2, but this is what the defined value is
     unsafe {syscall!(MMAP2,
-                    addr as _,
-                    size as _,
-                    proto.bits() as _,
-                    flags.bits() as _,
-                    fd as _,
-                    offset as _
+                    addr,
+                    size,
+                    proto.bits(),
+                    flags.bits(),
+                    fd,
+                    offset
                 ) as _}
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn write(
-    fd:ffi::c_int,
-    buffer:*const ffi::c_void,
+    fd:c_int,
+    buffer:*const c_void,
     size: usize
 
 )->isize{ // ssize_t
-    unsafe{syscall!(sys::SYS_write as _ ,
-        fd as _,
-        buffer as _,
-         size as _) as _
+    unsafe{syscall!(sys::SYS_write,
+        fd,
+        buffer,
+         size) as _
         } 
 }
 
