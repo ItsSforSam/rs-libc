@@ -54,7 +54,8 @@ multiple_unsafe_ops_per_block   = {level = "warn"}
 unnecessary_safety_comment      = {level = "warn"}
 unnecessary_safety_doc          = {level = "warn"}
 dbg_macro                       = {level = "warn" } # prevents dbg being apart of a release
-
+# These are often just wrappers around new. Especially if new takes no parameters. Just taking up code gen
+new_without_default             = {level = "allow"} 
 [workspace.lints.rust]
 non-ascii-idents               =  {level = "forbid"} # Why use non-ascii idents? Make it harder to use this code base?
 unsafe-op-in-unsafe-fn         =  {level = "forbid"} # Add
