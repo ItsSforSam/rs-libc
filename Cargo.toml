@@ -57,11 +57,11 @@ dbg_macro                       = {level = "warn" } # prevents dbg being apart o
 # These are often just wrappers around new. Especially if new takes no parameters. Just taking up code gen
 new_without_default             = {level = "allow"} 
 [workspace.lints.rust]
-non-ascii-idents               =  {level = "forbid"} # Why use non-ascii idents? Make it harder to use this code base?
-unsafe-op-in-unsafe-fn         =  {level = "forbid"} # Add
-redundant-imports              =  {level = "warn"}
-linker-messages                =  {level = "warn"}
-missing-debug-implementations  =  {level = "warn"}
-missing_docs                   =  {level = "warn"}
-redundant-lifetimes            =  {level = "warn"} # better use less life times when possible
-single-use-lifetimes           =  {level = "warn"}
+non-ascii-idents                = {level = "forbid"} # Why use non-ascii idents? Make it harder to use this code base?
+unsafe-op-in-unsafe-fn          = {level = "deny"} # There a reasons on why to do this, like wrapping it around the C-abi. But most of the time it's a no
+redundant-imports               = {level = "warn"}
+linker-messages                 = {level = "warn"}
+missing-debug-implementations   = {level = "warn"}
+missing_docs                    = {level = "warn"}
+redundant-lifetimes             = {level = "warn"} # better use less life times when possible
+single-use-lifetimes            = {level = "warn"}
