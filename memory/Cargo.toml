@@ -8,7 +8,7 @@ license.workspace = true
 [dependencies]
 cfg-if = "1.0.4"
 
-spin = {version = "0.10.0", default-features = false,features = ["lazy"]}
+spin = {version = "0.10.0", default-features = false,features = ["spin_mutex"]}
 api  = {path = "../api"}
 # [target.'cfg(not(feature="std"))'.dependencies]
 
