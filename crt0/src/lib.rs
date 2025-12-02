@@ -28,7 +28,7 @@ global_asm!{
         "mov rax, 60",
         "syscall",
     // Exits program
-    libc_start = sym start_main,
+    libc_start = sym start_main, // Allows name mangling and not exporting it out of obj file unnecessarily
 }
 
 
