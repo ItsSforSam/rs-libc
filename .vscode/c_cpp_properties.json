@@ -5,13 +5,14 @@
             "includePath": [
                 "${workspaceFolder}/**"
             ],
+            
             "defines": [],
             "compilerPath": "/usr/bin/clang",
             "cStandard": "c17",
-            "cppStandard": "c++17",
+            // "cppStandard": "c++17",
             "intelliSenseMode": "linux-clang-x64",
             "compilerArgs": [
-                "-nostartfiles  -nobuiltininc -nodefaultlibs -nostdlib "
+                "-nostartfiles",  "-nobuiltininc", "-nodefaultlibs", "-nostdlib", "-isystem", "${workspaceFolder}/include"
             ]
         }
     ],
