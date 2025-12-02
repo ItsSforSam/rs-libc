@@ -81,7 +81,7 @@ macro_rules! syscall {
 #[doc(hidden)]
 pub fn __syscall_ret(ret:long)->long{
     if ret > (-4096i64) {
-        unsafe{crate::errno::ERRNO = -ret};
+        crate::errno::ERRNO.set((-ret) as _);
         return -1;
     }
     ret

@@ -1,4 +1,4 @@
-use core::fmt::Display;
+use core::{ffi::c_int, fmt::Display};
 
 use api_sys as sys;
 
@@ -9,6 +9,7 @@ macro_rules! def {
     ($($e:ident),*) => {
         #[derive(Debug,PartialEq,Eq,Clone)]
         #[repr(u32)]
+        #[non_exhaustive]
         pub enum Errno{
             $(
                 $e = ::api_sys::$e,
@@ -161,6 +162,7 @@ def!(
 //     // fn
 // }
 impl Errno{
+    /// What the 
     pub const fn as_str(&self)->&'static str{
         use Errno::*;
         match self{
@@ -205,7 +207,7 @@ impl Errno{
             ENOSYS => "Function not implemented",
             ENOTEMPTY => "Directory not empty",
             ELOOP => "Too many levels of symbolic links",
-            EWOULDBLOCK => "Resource temporarily unavailable",
+            // EWOULDBLOCK => "Resource temporarily unavailable",
             ENOMSG => "No message of desired type",
             EIDRM => "Identifier removed",
             ECHRNG => "Channel number out of range",
@@ -222,7 +224,7 @@ impl Errno{
             ENOANO => "No anode",
             EBADRQC => "Invalid request code",
             EBADSLT => "Invalid slot",
-            EDEADLOCK => "Resource deadlock avoided",
+            // EDEADLOCK => "Resource deadlock avoided",
             EBFONT => "Bad font file format",
             ENOSTR => "Device not a stream",
             ENODATA => "No data available",
@@ -298,7 +300,9 @@ impl Errno{
             ENOTRECOVERABLE => "State not recoverable",
             ERFKILL => "Operation not possible due to RF-kill",
             EHWPOISON => "Memory page has hardware error",
-            ENOTSUP => "Operation not supported",
+            // ENOTSUP => "Operation not supported",
+            _ => "Unknown Errno"
+            // CSpell: enable
         }
     }
     
@@ -313,8 +317,19 @@ impl Display for Errno{
         f.write_str(self.as_str())
     }
 }
+use core::cell::Cell;
+
 #[thread_local]
-pub static mut ERRNO:i64 = 0;
+pub static ERRNO:Cell<c_int> = Cell::new(0);
 
-
+/// This is aliased to C as the errno with
+/// 
+/// ```C
+/// #define errno {*__get_errno_ptr()}
+/// ```
+// SAFETY: double underscore prefix makes it impl specific and there shouldn't be and other libc loaded 
+#[unsafe(no_mangle)]
+extern "C" fn __get_errno_ptr() -> *mut c_int{
+    ERRNO.as_ptr()  
+}
 
