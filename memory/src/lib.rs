@@ -5,12 +5,14 @@
 #![no_std]
 #![feature(ptr_alignment_type)]
 #![feature(ptr_as_ref_unchecked)]
+#![feature(ptr_as_uninit)]
 
 extern crate alloc;
 
 
 use core::alloc::Layout;
 use core::fmt::Write;
+use core::mem::MaybeUninit;
 use core::{ffi::c_void, num::NonZero, ptr::{NonNull,Alignment},};
 
 use alloc::alloc::{GlobalAlloc};
@@ -43,13 +45,17 @@ struct Node{
 //     }
 // }
 impl Node {
+    const MIN_DATA_SIZE: usize = 1;
+
     fn get_data_offset(node:*const Node, alignment: usize) -> usize {
+        // SAFETY: nodes always have at least MIN_DATA_SIZE with alignment 1
         let after_node_ptr:*const u8 =  unsafe{node.add(1)}.cast();
         after_node_ptr.align_offset(alignment)
     }
     fn get_data_ptr(node:*mut Node, alignment: usize) -> *mut u8 {
         let node_ptr:*mut u8 = node.cast();
-        unsafe{node_ptr.byte_add(Node::get_data_offset(node, alignment))}
+        // SAFETY: nodes always have at least MIN_DATA_SIZE with alignment 1     
+        unsafe{node_ptr.add(Node::get_data_offset(node, alignment))}
     }
     //None if it doesn't fit
     //Returned Some value will be >= layout.size()
@@ -63,28 +69,25 @@ impl Node {
         let current_padding = Node::get_data_offset(self, current_align);
         let new_padding = Node::get_data_offset(self,new_align);
         let current_raw_size = current_padding+current_size;
-        if let Some(capacity) = current_raw_size.checked_sub(new_padding) {
-            if capacity>=new_size {Some(capacity)} else {None}
-        } else {
-            None
-        }
+        current_raw_size.checked_sub(new_padding).filter(|&capacity| capacity >= new_size)
     }
 
     //fails if self isn't free or if there isn't enough space
     fn split(&mut self,min_size:usize) -> bool {
         if !self.free {return false;}
-        const MIN_DATA_SIZE: usize = 1;
-        if let Some(n) = self.layout.size().checked_sub(size_of::<Node>()) {
-            if n>=min_size {
-                //then split
-                let after = unsafe { Node::get_data_ptr(self, self.layout.align()).byte_add(min_size) };
-                let new_node:&mut Node = unsafe { after.byte_add(after.align_offset(align_of::<Node>())).cast::<Node>().as_mut_unchecked() };
+        if let Some(n) = self.layout.size().checked_sub(size_of::<Node>()+Self::MIN_DATA_SIZE) && n>=min_size {
+            //then split
+            // SAFETY: checked if in bounds of allocation above
+            let after = unsafe { Node::get_data_ptr(self, self.layout.align()).byte_add(min_size) };
+            let padding = after.align_offset(align_of::<Node>());
+            let new_node:&mut Node = unsafe { after.byte_add(padding).cast::<Node>().as_mut_unchecked() };
+            //TODO: make sure that the new node fits into the data section even with the alignment
+            if (unsafe { (new_node as *mut Node as *mut u8).add(size_of::<Node>()+Self::MIN_DATA_SIZE) } <after.add(self.layout.size()-min_size))
 
-                *new_node = Node { free: true, layout: unsafe { Layout::from_size_align_unchecked(1, 1) }, next: self.next };
-                self.next = Some(unsafe { NonNull::new_unchecked(new_node) });
+            *new_node = (Node { free: true, layout: unsafe { Layout::from_size_align_unchecked(1, 1) }, next: self.next });
+            self.next = Some(unsafe { NonNull::new_unchecked(new_node) });
 
-                return true;
-            }
+            return true;
         }
 
         false
@@ -117,55 +120,76 @@ impl Allocator{
                 loop {
                     match current {
                         None => break,
-                        Some(next) => {
-                            let node = unsafe{next.as_mut()};
+                        Some(mut nonnull_node) => {
+                            // SAFETY: iterating one by one so we only have one mut ref at a time
+                            let node = unsafe{nonnull_node.as_mut()};
                             if node.free {
 
                                 let new_size = node.get_new_size_aligned(layout);
-                                match new_size {
-                                    Some(real_size) => {
-                                        node.layout = unsafe { Layout::from_size_align_unchecked(real_size, layout.align()) };
-                                        node.split(real_size);
-                                        node.free=false;
-                                        return Ok(Node::get_data_ptr(node, layout.align()) as _);
-                                    }
-                                    None => (),
+                                if let Some(real_size) = new_size {
+                                    // SAFETY: align follows rules. real_size might overflow isize but hopefully not
+                                    node.layout = unsafe { Layout::from_size_align_unchecked(real_size, layout.align()) };
+                                    node.split(real_size);
+                                    node.free=false;
+                                    return Ok(Node::get_data_ptr(node, layout.align()) as _);
                                 }
                             }
                             current = node.next;
                         }
                     }
                 }
+                //couldn't find suitable Node
+                let node = Self::alloc_node(layout, requested_size)?;
+                return Ok(Node::get_data_ptr(node, layout.align()) as _);
             }
-
+            //0x2
+            //0 2 4 8 a c e 10
+            //0x10
+            //0 10 20 30
             None =>{
-                let v = Allocator::alloc_inner(requested_size);
-                if v.is_null(){
-                    return v;
-                }
-
-                // Node is a heder and exists before every allocation in memory
-                let node_ptr:*mut Node = v as _;
-
-                unsafe{*node_ptr = Node{
-                    free:false,
-                    layout:layout,
-                    next:None,
-                }};
-                *data = node_ptr;
-                return Node::get_data_ptr(node_ptr, alignment)
+                let node = Self::alloc_node(layout, requested_size)?;
+                return Ok(Node::get_data_ptr(node, layout.align()) as _);
             }
         }
         todo!()
     }
     
+    fn alloc_node(layout:Layout, requested_size:usize) -> Result<*mut Node,AllocError> {
+        //TODO test this alignment code
+        let end = align_of::<Node>();
+        let padding = if end<layout.align() {
+            layout.align()-end
+        } else {
+            0
+        };
+        let real_size = requested_size+padding+size_of::<Node>();
+        let v = Allocator::alloc_inner(real_size);
+        if v.is_null(){
+            return Err(AllocError::OutOfMemory);
+        }
+
+        // Node is a heder and exists before every allocation in memory
+        // SAFETY: checked if null above
+        let node_ptr:NonNull<Node> = unsafe {NonNull::new_unchecked(v as _)};
+        // SAFETY: pointer is convertible to reference
+        let uninit_node = unsafe { node_ptr.as_uninit_mut() };
+        let node = uninit_node.write(
+        Node{
+                free:false,
+                // SAFETY: align follows rules. real_size might overflow isize but hopefully not
+                layout:unsafe { Layout::from_size_align_unchecked(real_size, layout.align()) },
+                next:None,
+            }
+        );
+        Ok(node)
+    }
     
     /// Force an allocation
     /// 
     /// Does not pass the allocator, just do the raw allocation
     fn alloc_inner(size:usize) -> *mut c_void{
         api::mmap(
-            0 as _, // Null basically tell the Kernel "idc you chose!"
+            ptr::null_mut(), // Null basically tell the Kernel "idc you chose!"
              size,
              api::MMapProt::Read | api::MMapProt::Write, 
              api::MMapFlags::Anonymous | api::MMapFlags::Private, 
