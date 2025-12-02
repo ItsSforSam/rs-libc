@@ -13,7 +13,7 @@ use bitflags::bitflags;
 pub mod macros;
 pub mod arch;
 pub mod errno;
-
+pub mod stdio;
 
 
 // # Safety
@@ -118,11 +118,14 @@ pub extern "C" fn write(
 /// 
 /// Currently if it fails it calls an invalid instruction via rust's
 /// []
-fn abort()->!{
+#[expect(unreachable_code, reason = "We are trying to kill this program no matter what. So we try multiple never functions, even if they siminly never return")]
+pub fn abort()->!{
     // @TODO: unmask signal 
     kill(getpid(), api_sys::SIGABRT as _);
 
     core::intrinsics::abort();
+    // SAFETY: Technically this is UB, but we are intentionally accessing an invalid address
+    let _:u8 = unsafe {core::ptr::read_volatile(core::ptr::null())};
     unreachable!("Abort function failed. Panicking");
 }
 fn getpid() -> api_sys::__pid_t{
