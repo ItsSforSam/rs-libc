@@ -80,16 +80,51 @@ impl Node {
             // SAFETY: checked if in bounds of allocation above
             let after = unsafe { Node::get_data_ptr(self, self.layout.align()).byte_add(min_size) };
             let padding = after.align_offset(align_of::<Node>());
-            let new_node:&mut Node = unsafe { after.byte_add(padding).cast::<Node>().as_mut_unchecked() };
+            let new_node = {
+                // SAFETY: aligned
+                let ptr = unsafe { after.byte_add(padding)}.cast::<Node>();
+                // SAFETY: convertible to reference
+                let uninit = unsafe{ptr.as_uninit_mut()};
+                // SAFETY: known not to be null
+                unsafe { uninit.unwrap_unchecked() }
+            };
+            let new_node_ptr = new_node.as_ptr();
+            let new_node_end = new_node_ptr as usize + (size_of::<Node>()+Self::MIN_DATA_SIZE) ;
+            let real_after = after as usize + (self.layout.size()-min_size);
             //TODO: make sure that the new node fits into the data section even with the alignment
-            if (unsafe { (new_node as *mut Node as *mut u8).add(size_of::<Node>()+Self::MIN_DATA_SIZE) } <after.add(self.layout.size()-min_size))
+            if new_node_end != real_after {return false;}
 
-            *new_node = (Node { free: true, layout: unsafe { Layout::from_size_align_unchecked(1, 1) }, next: self.next });
-            self.next = Some(unsafe { NonNull::new_unchecked(new_node) });
+            let next_node = new_node.write(
+                // SAFETY: constants are valid align and don't overflow
+                Node { free: true, layout: unsafe { Layout::from_size_align_unchecked(1, 1) }, next: self.next }
+            );
+            // SAFETY: next_node/new_node is not null
+            self.next = Some(unsafe { NonNull::new_unchecked(next_node) });
 
             return true;
         }
 
+        false
+    }
+    //fails if isn't free or next isn't free
+    fn join(&mut self) -> bool {
+        if !self.free {return false;}
+        if let Some(mut next_ptr) = self.next {
+            // SAFETY: Node.next always assumed to be valid
+            let next = unsafe { next_ptr.as_mut() };
+            if !next.free {return false;}
+            // SAFETY: it has a block after so all the data in between is valid
+            let end = unsafe { Node::get_data_ptr(self, self.layout.align()).add(self.layout.size()) };
+            let end_next_padding = end.align_offset(align_of::<Node>());
+
+            self.next = next.next;
+            //this makes the next block no longer valid
+            let total_size = end_next_padding+size_of::<Node>()+Node::get_data_offset(next, next.layout.align())+next.layout.size();
+
+            // SAFETY: align follows rules. size might overflow isize but hopefully not
+            self.layout = unsafe { Layout::from_size_align_unchecked(self.layout.size()+total_size, self.layout.align()) };
+            return true;
+        }
         false
     }
 }
@@ -106,8 +141,9 @@ impl Allocator{
 
 
     }
+    //use *mut u8 to match GlobalAlloc
     #[cfg_attr(any(test,miri), track_caller)]
-    pub fn alloc(&mut self,layout:Layout)-> Result<*mut c_void,AllocError> {
+    pub fn inner_alloc(&self,layout:Layout)-> Result<*mut u8,AllocError> {
         let requested_size = layout.size();
         if requested_size == 0{
             return Err(AllocError::OutOfMemory);
@@ -131,7 +167,7 @@ impl Allocator{
                                     node.layout = unsafe { Layout::from_size_align_unchecked(real_size, layout.align()) };
                                     node.split(real_size);
                                     node.free=false;
-                                    return Ok(Node::get_data_ptr(node, layout.align()) as _);
+                                    return Ok(Node::get_data_ptr(node, layout.align()));
                                 }
                             }
                             current = node.next;
@@ -140,7 +176,7 @@ impl Allocator{
                 }
                 //couldn't find suitable Node
                 let node = Self::alloc_node(layout, requested_size)?;
-                return Ok(Node::get_data_ptr(node, layout.align()) as _);
+                Ok(Node::get_data_ptr(node, layout.align()))
             }
             //0x2
             //0 2 4 8 a c e 10
@@ -148,14 +184,14 @@ impl Allocator{
             //0 10 20 30
             None =>{
                 let node = Self::alloc_node(layout, requested_size)?;
-                return Ok(Node::get_data_ptr(node, layout.align()) as _);
+                Ok(Node::get_data_ptr(node, layout.align()))
             }
         }
-        todo!()
     }
     
     fn alloc_node(layout:Layout, requested_size:usize) -> Result<*mut Node,AllocError> {
         //TODO test this alignment code
+        //TODO allocate a page(get pagesize at runtime) if the allocation fits (so when freed, other smaller allocations can use), if not allocate full size
         let end = align_of::<Node>();
         let padding = if end<layout.align() {
             layout.align()-end
@@ -163,7 +199,7 @@ impl Allocator{
             0
         };
         let real_size = requested_size+padding+size_of::<Node>();
-        let v = Allocator::alloc_inner(real_size);
+        let v = Allocator::raw_alloc(real_size);
         if v.is_null(){
             return Err(AllocError::OutOfMemory);
         }
@@ -187,7 +223,7 @@ impl Allocator{
     /// Force an allocation
     /// 
     /// Does not pass the allocator, just do the raw allocation
-    fn alloc_inner(size:usize) -> *mut c_void{
+    fn raw_alloc(size:usize) -> *mut c_void{
         api::mmap(
             ptr::null_mut(), // Null basically tell the Kernel "idc you chose!"
              size,
@@ -196,6 +232,28 @@ impl Allocator{
              -1,
             0
         )
+    }
+    pub fn inner_dealloc(&self, ptr: *mut u8) {
+        let lock = self.node.lock();
+        if let Some(first) = *lock {
+            let mut current = Some(first);
+            loop {
+                match current {
+                    None => break,
+                    Some(mut nonnull_node) => {
+                        // SAFETY: convertible to ref
+                        let node = unsafe{nonnull_node.as_mut()};
+                        if Node::get_data_ptr(node, node.layout.align())==ptr {
+                            node.free=true;
+                            //join all the free nodes next to each other
+                            //fixes fragmentation
+                            loop {if !node.join() {break;}}
+                        }
+                        current=node.next;
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -206,12 +264,14 @@ impl Allocator{
 // Safety: Read GlobalAlloc's safety doc
 unsafe impl GlobalAlloc for Allocator{
     unsafe fn alloc(&self, layout: core::alloc::Layout) -> *mut u8 {
-        todo!()
-        
+        match self.inner_alloc(layout) {
+            Ok(v) => v as _,
+            Err(_) => ptr::null_mut(),
+        }
     }
     
-    unsafe fn dealloc(&self, pointer: *mut u8, layout: core::alloc::Layout) {
-        todo!()
+    unsafe fn dealloc(&self, pointer: *mut u8, _: core::alloc::Layout) {
+        self.inner_dealloc(pointer as _)
     }
 
 }
