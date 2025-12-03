@@ -3,9 +3,7 @@
 //! This is one of the few crates that support 
 // #![feature(allocator_api)]
 #![no_std]
-#![feature(ptr_alignment_type)]
-#![feature(ptr_as_ref_unchecked)]
-#![feature(ptr_as_uninit)]
+#![feature(ptr_alignment_type,ptr_as_ref_unchecked,ptr_as_uninit)]
 
 extern crate alloc;
 
@@ -31,11 +29,9 @@ pub struct Allocator{
 }
 #[derive(Debug)]
 struct Node{
-
-    free:bool,
+    free: bool,
     layout: core::alloc::Layout,
-    pub(crate) next:Option<NonNull<Node>>, // Null should be None, like NonNull but that
-
+    pub(crate) next:Option<NonNull<Node>>, // None if there is no next
 }
 // Does not need to drop as it simply is static only (currently)
 // impl Drop for Node{
@@ -57,8 +53,8 @@ impl Node {
         // SAFETY: nodes always have at least MIN_DATA_SIZE with alignment 1     
         unsafe{node_ptr.add(Node::get_data_offset(node, alignment))}
     }
-    //None if it doesn't fit
-    //Returned Some value will be >= layout.size()
+    /// None if it doesn't fit
+    /// Returned `Some` value will be `>= layout.size()`
     fn get_new_size_aligned(&self, layout:Layout) -> Option<usize> {
         let current_align = self.layout.align();
         let current_size = self.layout.size();
@@ -72,7 +68,7 @@ impl Node {
         current_raw_size.checked_sub(new_padding).filter(|&capacity| capacity >= new_size)
     }
 
-    //fails if self isn't free or if there isn't enough space
+    /// Fails if self isn't free or if there isn't enough space
     fn split(&mut self,min_size:usize) -> bool {
         if !self.free {return false;}
         if let Some(n) = self.layout.size().checked_sub(size_of::<Node>()+Self::MIN_DATA_SIZE) && n>=min_size {
@@ -106,7 +102,7 @@ impl Node {
 
         false
     }
-    //fails if isn't free or next isn't free
+    /// Fails if it isn't free or next isn't free
     fn join(&mut self) -> bool {
         if !self.free {return false;}
         if let Some(mut next_ptr) = self.next {
@@ -142,7 +138,7 @@ impl Allocator{
 
     }
     //use *mut u8 to match GlobalAlloc
-    #[cfg_attr(any(test,miri), track_caller)]
+    
     pub fn inner_alloc(&self,layout:Layout)-> Result<*mut u8,AllocError> {
         let requested_size = layout.size();
         if requested_size == 0{
@@ -174,14 +170,11 @@ impl Allocator{
                         }
                     }
                 }
-                //couldn't find suitable Node
+                // Can't find a free Node with an appropriate size. Allococate!
                 let node = Self::alloc_node(layout, requested_size)?;
                 Ok(Node::get_data_ptr(node, layout.align()))
             }
-            //0x2
-            //0 2 4 8 a c e 10
-            //0x10
-            //0 10 20 30
+
             None =>{
                 let node = Self::alloc_node(layout, requested_size)?;
                 Ok(Node::get_data_ptr(node, layout.align()))
@@ -190,8 +183,8 @@ impl Allocator{
     }
     
     fn alloc_node(layout:Layout, requested_size:usize) -> Result<*mut Node,AllocError> {
-        //TODO test this alignment code
-        //TODO allocate a page(get pagesize at runtime) if the allocation fits (so when freed, other smaller allocations can use), if not allocate full size
+        // TODO test this alignment code
+        // TODO allocate a page(get pagesize at runtime) if the allocation fits (so when freed, other smaller allocations can use), if not allocate full size
         let end = align_of::<Node>();
         let padding = if end<layout.align() {
             layout.align()-end
@@ -204,7 +197,7 @@ impl Allocator{
             return Err(AllocError::OutOfMemory);
         }
 
-        // Node is a heder and exists before every allocation in memory
+        // Node is a header and exists before every allocation in memory
         // SAFETY: checked if null above
         let node_ptr:NonNull<Node> = unsafe {NonNull::new_unchecked(v as _)};
         // SAFETY: pointer is convertible to reference
@@ -263,13 +256,14 @@ impl Allocator{
 // }
 // Safety: Read GlobalAlloc's safety doc
 unsafe impl GlobalAlloc for Allocator{
+    #[cfg_attr(any(test,miri), track_caller)] // even without panics, this helps for Miri backtraces
     unsafe fn alloc(&self, layout: core::alloc::Layout) -> *mut u8 {
         match self.inner_alloc(layout) {
             Ok(v) => v as _,
             Err(_) => ptr::null_mut(),
         }
     }
-    
+    #[cfg_attr(any(test,miri), track_caller)] // even without panics, this helps for Miri backtraces
     unsafe fn dealloc(&self, pointer: *mut u8, _: core::alloc::Layout) {
         self.inner_dealloc(pointer as _)
     }
