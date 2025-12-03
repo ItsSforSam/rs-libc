@@ -14,7 +14,15 @@ pub mod macros;
 pub mod arch;
 pub mod errno;
 pub mod stdio;
+pub mod mman;
 
+pub mod prelude{
+    /// Due to the amount of ffi to C, it should be convenient.
+    /// All ffi types are prefixed anyway
+    pub use core::ffi::*;
+    pub use crate::errno::{Errno,ERRNO};
+    pub use crate::syscall;
+}
 
 // # Safety
 // Calling 
@@ -36,7 +44,6 @@ pub unsafe extern "C" fn syscall(_call:c_double,mut args:...) -> c_long{
         e=args.arg();
         f=args.arg();
         g=args.arg();
-
         crate::arch::current::syscall6(a, b, c, d, e, f, g)
     }
     
