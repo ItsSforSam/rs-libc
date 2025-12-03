@@ -21,17 +21,28 @@ use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use core::ptr;
 // use core::alloc::AllocError;
 #[derive(Debug)]
+struct AllocatorData {
+    first_node: NonNull<Node>,
+    first_page: NonNull<PageNode>,
+}
+#[derive(Debug)]
 pub struct Allocator{
+    data:spin::Mutex<Option<AllocatorData>> // Null should be None, like NonNull but could be mutated
+}
 
-    // This is a header
-    node:spin::Mutex<Option<NonNull<Node>>> // Null should be None, like NonNull but could be mutated
-
+//exists for every real allocation (mmap on linux)
+#[derive(Debug)]
+struct PageNode{
+    size: usize,
+    next: Option<NonNull<PageNode>>,
+    prev: Option<NonNull<PageNode>>,
 }
 #[derive(Debug)]
 struct Node{
     free: bool,
     layout: core::alloc::Layout,
     pub(crate) next:Option<NonNull<Node>>, // None if there is no next
+    page: *const PageNode,
 }
 // Does not need to drop as it simply is static only (currently)
 // impl Drop for Node{
@@ -91,8 +102,13 @@ impl Node {
             if new_node_end != real_after {return false;}
 
             let next_node = new_node.write(
-                // SAFETY: constants are valid align and don't overflow
-                Node { free: true, layout: unsafe { Layout::from_size_align_unchecked(1, 1) }, next: self.next }
+                Node { 
+                    free: true, 
+                    // SAFETY: constants are valid align and don't overflow
+                    layout: unsafe { Layout::from_size_align_unchecked(1, 1) }, 
+                    next: self.next,
+                    page: self.page,
+                }
             );
             // SAFETY: next_node/new_node is not null
             self.next = Some(unsafe { NonNull::new_unchecked(next_node) });
@@ -132,7 +148,7 @@ impl Allocator{
     pub const fn new() -> Allocator{
         
         Allocator {
-            node:Mutex::new(None),
+            data:Mutex::new(None),
         }
 
 
@@ -144,11 +160,11 @@ impl Allocator{
         if requested_size == 0{
             return Err(AllocError::OutOfMemory);
         }
-        let data = self.node.lock();
+        let mut data = self.data.lock();
         match *data {
-            Some(v) =>{
+            Some(ref alloc_data) =>{
                 //go thru every header and see which fits
-                let mut current = Some(v);
+                let mut current = Some(alloc_data.first_node);
                 loop {
                     match current {
                         None => break,
@@ -181,22 +197,58 @@ impl Allocator{
             }
         }
     }
+
+    fn get_last_page(first_page:Option<NonNull<PageNode>>) -> Option<NonNull<PageNode>> {
+        if let Some(n) = first_page {
+            let mut current = n;
+            loop {
+                match unsafe { current.as_mut() }.next {
+                    None => return Some(current),
+                    Some(next) => {
+                        current = next;
+                    }
+                }
+            }
+        }
+        None
+    }
     
-    fn alloc_node(layout:Layout, requested_size:usize) -> Result<*mut Node,AllocError> {
+    fn alloc_node(first_page:Option<NonNull<PageNode>>,layout:Layout, requested_size:usize) -> Result<*mut Node,AllocError> {
         // TODO test this alignment code
         // TODO allocate a page(get pagesize at runtime) if the allocation fits (so when freed, other smaller allocations can use), if not allocate full size
         let node_align = align_of::<Node>();
         // max possible padding (actual padding depends on runtime addresses)
         let max_padding = layout.align().saturating_sub(node_align);
-        let real_size = size_of::<Node>()+requested_size+max_padding;
+        let node_padding = align_of::<Node>().saturating_sub(align_of::<PageNode>());
+        let real_size = size_of::<PageNode>()+node_padding+size_of::<Node>()+requested_size+max_padding;
         let v = Allocator::raw_alloc(real_size);
         if v.is_null(){
             return Err(AllocError::OutOfMemory);
         }
 
-        // Node is a header and exists before every allocation in memory
+        // PageNode is a header and exists before every real allocation in memory
         // SAFETY: checked if null above
-        let node_ptr:NonNull<Node> = unsafe {NonNull::new_unchecked(v as _)};
+        let page_node:NonNull<PageNode> = unsafe {NonNull::new_unchecked(v as _)};
+        // SAFETY: pointer is convertible to reference
+        let uninit_page_node = unsafe { page_node.as_uninit_mut() };
+        let init_page_node = uninit_page_node.write(
+            PageNode{size:real_size,prev:None,next:None}
+        );
+        match Self::get_last_page(first_page) {
+            None => (),
+            Some(mut last) => {
+                let last_ptr = unsafe { last.as_mut() };
+                init_page_node.prev = Some(NonNull::from_mut(last_ptr));
+                last_ptr.next = Some(NonNull::from_mut(init_page_node));
+            }
+        }
+
+        // Node is a header and exists before every virtual allocation in memory
+        // SAFETY: checked if null above
+        let after_page_node = unsafe { page_node.add(1) };
+        let real_node_padding = after_page_node.align_offset(align_of::<Node>());
+        // SAFETY: aligned
+        let node_ptr:NonNull<Node> = unsafe {after_page_node.byte_add(real_node_padding)}.cast();
         // SAFETY: pointer is convertible to reference
         let uninit_node = unsafe { node_ptr.as_uninit_mut() };
         let node = uninit_node.write(
@@ -205,6 +257,7 @@ impl Allocator{
                 // SAFETY: align follows rules. real_size might overflow isize but hopefully not
                 layout:unsafe { Layout::from_size_align_unchecked(real_size, layout.align()) },
                 next:None,
+                page: page_node.as_ptr(),
             }
         );
         Ok(node)
