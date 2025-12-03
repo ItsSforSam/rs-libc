@@ -12,7 +12,11 @@
             // "cppStandard": "c++17",
             "intelliSenseMode": "linux-clang-x64",
             "compilerArgs": [
-                "-nostartfiles",  "-nobuiltininc", "-nodefaultlibs", "-nostdlib", "-isystem", "${workspaceFolder}/include"
+                "-nostartfiles", 
+                // "-nobuiltininc",
+                "-nodefaultlibs",
+                "-nostdlibinc",
+                "-isystem", "${workspaceFolder}/include"
             ]
         }
     ],
