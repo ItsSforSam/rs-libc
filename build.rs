@@ -4,7 +4,7 @@ use std::env::var;
 fn main(){
     cc::Build::new()
         .cpp(false)
-        .flag("-Wa")
+        .flag("-Wall")
         .file("");
 }
 
