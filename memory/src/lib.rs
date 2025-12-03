@@ -185,13 +185,10 @@ impl Allocator{
     fn alloc_node(layout:Layout, requested_size:usize) -> Result<*mut Node,AllocError> {
         // TODO test this alignment code
         // TODO allocate a page(get pagesize at runtime) if the allocation fits (so when freed, other smaller allocations can use), if not allocate full size
-        let end = align_of::<Node>();
-        let padding = if end<layout.align() {
-            layout.align()-end
-        } else {
-            0
-        };
-        let real_size = requested_size+padding+size_of::<Node>();
+        let node_align = align_of::<Node>();
+        // max possible padding (actual padding depends on runtime addresses)
+        let max_padding = layout.align().saturating_sub(node_align);
+        let real_size = size_of::<Node>()+requested_size+max_padding;
         let v = Allocator::raw_alloc(real_size);
         if v.is_null(){
             return Err(AllocError::OutOfMemory);
