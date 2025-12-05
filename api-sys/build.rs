@@ -32,8 +32,13 @@ fn gen_bindings(header:&str,output:&str,out_path: &Path){
     let full_out_path = out_path.join(output);
     bindgen::Builder::default()
     .header(header)
-    .clang_arg("-D__RSLIBC_BUILD_GEN=1") // Has the headers not include functions, only really constants and macros
-    .clang_arg("-nostdinc++") // No libc++ is used
+    .clang_args([
+        "-nostdinc++", // No libc++ is used
+        "-isystem", "../include", // Treat these as system files
+        "-nostdlibinc", // Don't search standard system includes but keep searching compiler includes
+        "-idirafter", &get_includes() // add the normal
+        
+        ]) 
         .use_core()
         // .clang_arg(" -nostdinc")  // Not yet...
         // .allowlist_file(arg)
@@ -61,6 +66,28 @@ fn gen_bindings(header:&str,output:&str,out_path: &Path){
         });
 }
 
+
+static INCLUDES_ERR:&str = "An invalid"
+
+fn get_includes() -> String{
+    use std::env::VarError;
+    
+    match std::env::var("CPATH") {
+        Ok(v) => {
+                            let p = std::path::
+                            let e = std::fs::exists(&v);
+
+                        },
+        #[cfg(unix)]
+        Err(VarError::NotPresent) => String::from("/usr/include"),
+        #[cfg(unix)]
+        Err(VarError::NotUnicode(v)) => panic!("Non UTF-8 value from `CPATH` (bindgen requires valid UTF-8). Value if {}", v.display()),
+        #[cfg(not(unix))]
+        Err(_) => unimplemented!("Linux is the only supported OS currently")
+    }
+}
+
+fn handle_includes_err(err:std::io::Error){}
 // // fn gen_headers(f:&Path) -> io::Result<()>{
 // //     let mut dir:Vec<&Path> = Vec::new();
 // //     for b in fs::read_dir(f)?{
