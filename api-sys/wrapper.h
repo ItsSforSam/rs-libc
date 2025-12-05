@@ -5,3 +5,4 @@
 #include <sys/syscall.h>
 #include <bits/syscall.h>
 #include <signal.h>
+#include <asm-generic.h>
