@@ -20,11 +20,15 @@ use spin::Mutex;
 use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use core::ptr;
 // use core::alloc::AllocError;
+
 #[derive(Debug)]
 struct AllocatorData {
-    first_node: NonNull<Node>,
+    // these are initialized together with Node immidiately after PageNode
     first_page: NonNull<PageNode>,
+    first_node: NonNull<Node>,
 }
+
+/// stores global mutex'd allocation data 
 #[derive(Debug)]
 pub struct Allocator{
     data:spin::Mutex<Option<AllocatorData>> // Null should be None, like NonNull but could be mutated
@@ -124,7 +128,7 @@ impl Node {
         if let Some(mut next_ptr) = self.next {
             // SAFETY: Node.next always assumed to be valid
             let next = unsafe { next_ptr.as_mut() };
-            if !next.free {return false;}
+            if !next.free || next.page!=self.page {return false;}
             // SAFETY: it has a block after so all the data in between is valid
             let end = unsafe { Node::get_data_ptr(self, self.layout.align()).add(self.layout.size()) };
             let end_next_padding = end.align_offset(align_of::<Node>());
@@ -187,33 +191,53 @@ impl Allocator{
                     }
                 }
                 // Can't find a free Node with an appropriate size. Allococate!
-                let node = Self::alloc_node(layout, requested_size)?;
-                Ok(Node::get_data_ptr(node, layout.align()))
+                let (node,page) = Self::alloc_page(layout, requested_size)?;
+                // SAFETY: convertible to reference
+                unsafe { Self::get_last_page(alloc_data.first_page).as_mut() }.next = Some(page);
+                // SAFETY: same as above
+                unsafe { Self::get_last_node(alloc_data.first_node).as_mut() }.next = Some(node);
+                
+                Ok(Node::get_data_ptr(node.as_ptr(), layout.align()))
             }
 
             None =>{
-                let node = Self::alloc_node(layout, requested_size)?;
-                Ok(Node::get_data_ptr(node, layout.align()))
+                let (node,page) = Self::alloc_page(layout, requested_size)?;
+                *data = Some(AllocatorData{
+                                    first_node: node,
+                                    first_page: page,
+                                });
+                Ok(Node::get_data_ptr(node.as_ptr(), layout.align()))
             }
         }
     }
 
-    fn get_last_page(first_page:Option<NonNull<PageNode>>) -> Option<NonNull<PageNode>> {
-        if let Some(n) = first_page {
-            let mut current = n;
-            loop {
-                match unsafe { current.as_mut() }.next {
-                    None => return Some(current),
-                    Some(next) => {
-                        current = next;
-                    }
+    fn get_last_node(first_node:NonNull<Node>) -> NonNull<Node> {
+        let mut current = first_node;
+        loop {
+            // SAFETY: caller provides vaild pointer
+            match unsafe { current.as_mut() }.next {
+                None => return current,
+                Some(next) => {
+                    current = next;
                 }
             }
         }
-        None
+    }
+    fn get_last_page(first_page:NonNull<PageNode>) -> NonNull<PageNode> {
+        let mut current = first_page;
+        loop {
+            // SAFETY: caller provides vaild pointer
+            match unsafe { current.as_mut() }.next {
+                None => return current,
+                Some(next) => {
+                    current = next;
+                }
+            }
+        }
     }
     
-    fn alloc_node(first_page:Option<NonNull<PageNode>>,layout:Layout, requested_size:usize) -> Result<*mut Node,AllocError> {
+    // caller should add new page to linked list
+    fn alloc_page(layout:Layout, requested_size:usize) -> Result<(NonNull<Node>,NonNull<PageNode>),AllocError> {
         // TODO test this alignment code
         // TODO allocate a page(get pagesize at runtime) if the allocation fits (so when freed, other smaller allocations can use), if not allocate full size
         let node_align = align_of::<Node>();
@@ -231,17 +255,9 @@ impl Allocator{
         let page_node:NonNull<PageNode> = unsafe {NonNull::new_unchecked(v as _)};
         // SAFETY: pointer is convertible to reference
         let uninit_page_node = unsafe { page_node.as_uninit_mut() };
-        let init_page_node = uninit_page_node.write(
+        uninit_page_node.write(
             PageNode{size:real_size,prev:None,next:None}
         );
-        match Self::get_last_page(first_page) {
-            None => (),
-            Some(mut last) => {
-                let last_ptr = unsafe { last.as_mut() };
-                init_page_node.prev = Some(NonNull::from_mut(last_ptr));
-                last_ptr.next = Some(NonNull::from_mut(init_page_node));
-            }
-        }
 
         // Node is a header and exists before every virtual allocation in memory
         // SAFETY: checked if null above
@@ -251,7 +267,7 @@ impl Allocator{
         let node_ptr:NonNull<Node> = unsafe {after_page_node.byte_add(real_node_padding)}.cast();
         // SAFETY: pointer is convertible to reference
         let uninit_node = unsafe { node_ptr.as_uninit_mut() };
-        let node = uninit_node.write(
+        uninit_node.write(
         Node{
                 free:false,
                 // SAFETY: align follows rules. real_size might overflow isize but hopefully not
@@ -260,7 +276,7 @@ impl Allocator{
                 page: page_node.as_ptr(),
             }
         );
-        Ok(node)
+        Ok((node_ptr,page_node))
     }
     
     /// Force an allocation
@@ -277,9 +293,9 @@ impl Allocator{
         )
     }
     pub fn inner_dealloc(&self, ptr: *mut u8) {
-        let lock = self.node.lock();
-        if let Some(first) = *lock {
-            let mut current = Some(first);
+        let lock = self.data.lock();
+        if let Some(ref data) = *lock {
+            let mut current = Some(data.first_node);
             loop {
                 match current {
                     None => break,
