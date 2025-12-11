@@ -1,11 +1,13 @@
 {
     "cSpell.words": [
         "bindgen",
+        "bitflags",
         "globl",
         "libc",
         "MMAP",
         "repr",
         "rslibc",
+        "somereason",
         "syscall",
         "syscalls",
         "unistd"
