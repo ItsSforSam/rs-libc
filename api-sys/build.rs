@@ -10,6 +10,7 @@ use std::env;
 fn main(){
     println!("cargo::rerun-if-changed=build.rs");
     println!("cargo::rerun-if-changed=wrapper.h");
+    println!("cargo::rerun-if-changed=../include");
     let out_path:PathBuf = PathBuf::from(env::var_os("OUT_DIR").expect("OUT_DIR env not set, are you using cargo?"));
     
     /*
@@ -34,10 +35,12 @@ fn gen_bindings(header:&str,output:&str,out_path: &Path){
     .header(header)
     .clang_args([
         "-nostdinc++", // No libc++ is used
-        "-isystem", "../include", // Treat these as system files
-        "-nostdlibinc", // Don't search standard system includes but keep searching compiler includes
-        "-idirafter", &get_includes() // add the normal
-        
+        "-nostdlib",
+        "-nostartfiles", 
+
+
+        "-nostdlib",
+        "-I${workspaceFolder}/include"
         ]) 
         .use_core()
         // .clang_arg(" -nostdinc")  // Not yet...
@@ -67,15 +70,24 @@ fn gen_bindings(header:&str,output:&str,out_path: &Path){
 }
 
 
-static INCLUDES_ERR:&str = "An invalid"
 
 fn get_includes() -> String{
     use std::env::VarError;
     
     match std::env::var("CPATH") {
-        Ok(v) => {
-                            let p = std::path::
-                            let e = std::fs::exists(&v);
+        Ok(ref v) => {
+                            
+                            match std::fs::exists(v){
+                                Ok(b) => {
+                                    if b{
+                                        return v.clone();
+                                    } else{
+                                        panic!("An invalid include path at `{v}`")
+                                    }
+                                },
+                                Err(e) => panic!("An error occurred accessing path at {v}. Error: {e}")
+
+                            }
 
                         },
         #[cfg(unix)]
