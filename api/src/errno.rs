@@ -1,12 +1,15 @@
 use core::{ffi::c_int, fmt::{Display, Write}};
 
-use api_sys as sys;
 
 
 
 
 macro_rules! def {
-    ($($(#[$attr:meta])* $e:ident => $desc:literal),*) => {
+    (
+        $($(#[$attr:meta])*
+        $e:ident => $desc:literal
+    
+        ),*) => {
         #[derive(Debug,PartialEq,Eq,Clone)]
         #[repr(u32)]
         #[non_exhaustive]
@@ -29,6 +32,28 @@ macro_rules! def {
                 }
             }
         }
+        impl ::core::convert::TryFrom<::core::ffi::c_long> for Errno{
+           type Error = $crate::errno::InvalidIntToErrnoError;
+           fn try_from(value: ::core::ffi::c_long) -> ::core::result::Result<Self, Self::Error> {
+                use Errno::*;
+                match value as ::core::ffi::c_uint{
+                    $(
+                        ::api_sys::$e => Ok($e),
+                    )*
+                    _ => Err($crate::errno::InvalidIntToErrnoError(()))
+                }
+            }
+        }
+        impl ::core::convert::Into<::core::num::NonZero<::core::ffi::c_int>> for Errno{
+            #[inline]
+            fn into(self) -> ::core::num::NonZero<::core::ffi::c_int> {
+                // use Errno::*;
+                // SAFETY: Errno is never going to have a zero
+                unsafe {::core::num::NonZero::new_unchecked(self as ::core::ffi::c_int)}
+            }
+        }
+
+        
         impl Errno{
             pub const fn as_str(&self) -> &'static str{
                 use Errno::*;
@@ -36,8 +61,8 @@ macro_rules! def {
                     $(
                         &$e => $desc,
                     )*
-                    // SAFETY
-                    _ =>unsafe {::core::hint::unreachable_unchecked()}
+                    // SAFETY: 
+                    // _ =>unsafe {::core::hint::unreachable_unchecked()}
                 }
             }
         }
