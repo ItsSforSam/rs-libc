@@ -1,7 +1,8 @@
 #![allow(unsafe_op_in_unsafe_fn, reason ="these are simply reexporting them under the C abi")]
 #![allow(clippy::missing_safety_doc, reason ="they are wrappers for the most part")]
+#![allow(missing_docs, reason ="wrapper around rust functions to be exported")]
 use core::ffi::{c_long as long,c_ulong as ulong};
-use crate::arch::current::*;
+use crate::{arch::current::*, errno::Errno};
 
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn __syscall0(a:long)->long{
@@ -79,10 +80,31 @@ macro_rules! syscall {
     };
 }
 #[doc(hidden)]
-pub fn __syscall_ret(ret:long)->long{
-    if ret > (-4096i64) {
-        crate::errno::ERRNO.set((-ret) as _);
-        return -1;
+pub fn __syscall_ret(ret:long)->Result<long,crate::errno::Errno>{
+    
+    // Some syscalls return large values, like lseek
+    // But Linus says non errno returns won't be between -1 and -4095
+    if ret<=-1 && ret>=-4095  {
+        return Err(Errno::try_from(-ret).unwrap());
     }
-    ret
+    
+    Ok(ret)
+}
+/// Allows for converting the [Ok] to desired value.
+/// Used instead of 
+/// ```Rust,no_test
+/// 
+/// match syscall!(SYS_getpid){ // Note: getpid can not error, but is okay in this example
+///     Ok(v) => Ok(v as _)
+///     Err(v) => Err(v)
+/// }
+/// ```
+#[macro_export]
+macro_rules! __syscall_convert_to_Result {
+    ($e:expr) => {
+        match $e {
+            ::core::result::Result::Ok(v) => Ok(v as _)
+            ::core::result::Result::Err(v) => Err(v)
+        }
+    };
 }
