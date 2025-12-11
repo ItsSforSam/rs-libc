@@ -9,7 +9,7 @@ use core::ffi::c_long as long;
 /// Performing a raw syscall with malformed prams can cause undefined behaver
 #[inline(always)]
 pub unsafe fn syscall0(mut sc:long) -> long{
-    // SAFETY : caller guarantees that no undefined behaver occurs
+    // SAFETY: caller guarantees that no undefined behaver occurs
     unsafe {
         
         asm!{
@@ -28,7 +28,7 @@ pub unsafe fn syscall0(mut sc:long) -> long{
 /// Performing a raw syscall with malformed prams can cause undefined behaver
 #[inline(always)]
 pub unsafe fn syscall1(mut sc:long, p1:long) -> long{
-    // SAFETY : caller guarantees that no undefined behaver occurs
+    // SAFETY: caller guarantees that no undefined behaver occurs
     unsafe {
         
         asm!{
@@ -48,7 +48,7 @@ pub unsafe fn syscall1(mut sc:long, p1:long) -> long{
 /// Performing a raw syscall with malformed prams can cause undefined behaver
 #[inline(always)]
 pub unsafe fn syscall2(mut sc:long, p1:long, p2:long) -> long{
-    // SAFETY : caller guarantees that no undefined behaver occurs
+    // SAFETY: caller guarantees that no undefined behaver occurs
     unsafe {
         
         asm!{
@@ -68,7 +68,7 @@ pub unsafe fn syscall2(mut sc:long, p1:long, p2:long) -> long{
 /// Performing a raw syscall with malformed prams can cause undefined behaver
 #[inline(always)]
 pub unsafe fn syscall3(mut sc:long, p1:long, p2:long,p3:long) -> long{
-    // SAFETY : caller guarantees that no undefined behaver occurs
+    // SAFETY: caller guarantees that no undefined behaver occurs
     unsafe {
         
         asm!{
@@ -92,7 +92,7 @@ pub unsafe fn syscall3(mut sc:long, p1:long, p2:long,p3:long) -> long{
 /// Performing a raw syscall with malformed prams can cause undefined behaver
 #[inline(always)]
 pub unsafe fn syscall4(mut sc:long, p1:long, p2:long,p3:long,p4:long) -> long{
-    // SAFETY : caller guarantees that no undefined behaver occurs
+    // SAFETY: caller guarantees that no undefined behaver occurs
     unsafe {
         
         asm!{
@@ -116,7 +116,7 @@ pub unsafe fn syscall4(mut sc:long, p1:long, p2:long,p3:long,p4:long) -> long{
 /// Performing a raw syscall with malformed prams can cause undefined behaver
 #[inline(always)]
 pub unsafe fn syscall5(mut sc:long, p1:long, p2:long,p3:long,p4:long,p5:long) -> long{
-    // SAFETY : caller guarantees that no undefined behaver occurs
+    // SAFETY: caller guarantees that no undefined behaver occurs
     unsafe {
         
         asm!{
@@ -140,7 +140,7 @@ pub unsafe fn syscall5(mut sc:long, p1:long, p2:long,p3:long,p4:long,p5:long) ->
 /// Performing a raw syscall with malformed prams can cause undefined behaver
 #[inline(always)]
 pub unsafe fn syscall6(mut sc:long, p1:long, p2:long,p3:long,p4:long,p5:long,p6:long) -> long{
-    // SAFETY : caller guarantees that no undefined behaver occurs
+    // SAFETY: caller guarantees that no undefined behaver occurs
     unsafe {
         
         asm!{
