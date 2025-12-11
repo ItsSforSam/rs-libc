@@ -14,9 +14,11 @@
             "compilerArgs": [
                 "-nostartfiles", 
                 // "-nobuiltininc",
-                "-nodefaultlibs",
-                "-nostdlibinc",
-                "-isystem", "${workspaceFolder}/include"
+                // "-nodefaultlibs",
+
+                "-nostdlib",
+                "-I${workspaceFolder}/include"
+                // "-idirafter", "/usr/include"
             ]
         }
     ],
