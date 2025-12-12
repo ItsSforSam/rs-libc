@@ -12,7 +12,7 @@ use core::{ffi::c_void, num::NonZero, ptr::NonNull};
 
 use alloc::alloc::{GlobalAlloc};
 use alloc::ffi;
-use api::mmap;
+use api::mman::{mmap,MMapFlags,MMapProt};
 use core::sync::atomic::{AtomicBool,Ordering};
 use core::ptr;
 // use core::alloc::AllocError;
@@ -80,14 +80,14 @@ impl Allocator{
     /// 
     /// Does not pass the allocator, just do the raw allocation
     fn alloc_inner(size:usize) -> *mut c_void{
-        api::mmap(
+        mmap(
             0 as _, // Null basically tell the Kernel "idc you chose!"
              size,
-             api::MMapProt::Read | api::MMapProt::Write, 
-             api::MMapFlags::Anonymous | api::MMapFlags::Private, 
+             MMapProt::Read | MMapProt::Write, 
+             MMapFlags::Anonymous | MMapFlags::Private, 
              -1,
             0
-        )
+        ).unwrap()
     }
 }
 
