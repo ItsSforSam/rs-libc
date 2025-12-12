@@ -10,3 +10,6 @@ cfg-if = "1.0.4"
 
 [lib]
 crate-type = ["staticlib"]
+
+[lints]
+workspace = true
