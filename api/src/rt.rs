@@ -1,0 +1,21 @@
+//! Runtime routines for the runtime.
+//! 
+//! <b>These are internal details and should not be relied upon</b>
+
+use core::ffi::c_int;
+
+
+type MainFn = extern "C" fn(argc:ffi::c_int, argv: *mut *mut ffi::c_char)-> ffi::c_int;
+/// Entrypoint from crt0. Should not be 
+/// 
+// @NOTE: If you modify the signature. It's a breaking change. (Once released)
+//        This makes things...hard to update without breaking ABI
+// SAFETY: prefixed to avoid collisions
+#[unsafe(no_mangle)]
+unsafe extern "C" fn __rslibc_start_entrypoint_1(
+    mainfn:MainFn,
+    argv:*mut *mut core::ffi::c_char,
+    argc:core::ffi::c_int
+)->!{
+
+}

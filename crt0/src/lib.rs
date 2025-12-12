@@ -35,14 +35,21 @@ global_asm!{
 
 // SAFETY: No name clashes will occur
 // #[unsafe(export_name = "__libc_start_main")]
-#[expect(clippy::not_unsafe_ptr_arg_deref, reason ="Argv is safe, trust me bro")]
-pub extern "C-unwind" fn start_main(argc:ffi::c_int, unbound_argv: *mut *mut ffi::c_char)->ffi::c_int{
+/// # SAFETY
+/// Should never be called directly by rust
+pub unsafe extern "C" fn start_main(argc:ffi::c_int, unbound_argv: *mut *mut ffi::c_char)->!{
     unsafe extern "C" {
         // Allows libc to call main as
         unsafe fn main(argc:ffi::c_int, argv: *mut *mut ffi::c_char)-> ffi::c_int;
-        
+        /// def in [`api::rt`]
+        unsafe fn __rslibc_start_entrypoint_1(
+            mainfn:unsafe extern "C" fn(argc:ffi::c_int, argv: *mut *mut ffi::c_char)-> ffi::c_int,
+            argv:*mut *mut ffi::c_char,
+            argc:ffi::c_int
+        )->!;
     }
-    unsafe {main(argc,unbound_argv)}
+    // SAFETY: There can be no safety gurantees as we are simply passing raw pointer to a foreign function
+    unsafe {__rslibc_start_entrypoint_1(main as _,unbound_argv,argc)};
     
 }
 
