@@ -347,6 +347,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "testlib"
+version = "0.0.0"
+
+[[package]]
 name = "unicode-ident"
 version = "1.0.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -372,10 +376,6 @@ dependencies = [
  "libc",
  "pkg-config",
 ]
-
-[[package]]
-name = "utils"
-version = "0.0.0"
 
 [[package]]
 name = "wasip2"
