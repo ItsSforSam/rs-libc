@@ -5,15 +5,25 @@
 //! When a panic occurs it should be treated as a unresolvable error.
 //! A backtrace may or may not be given.
 //! 
-use core::panic::PanicInfo;
+use core::{cell::Cell, panic::{PanicInfo, UnwindSafe}};
+
+#[thread_local]
+static PANIC_COUNT:Cell<u8> = Cell::new(0);
 
 #[unsafe(no_mangle)]
 pub extern "Rust" fn __panic_impl(_i:&PanicInfo)->!{
+    // No data races occur on thread
+    let val = PANIC_COUNT.get();
+    if PANIC_COUNT.get() != 0{
+        api::abort();
+    }else{
+        PANIC_COUNT.update(|x| x+1); // If a value changed, it will 
+    }
     todo!()
 }
 
 #[cfg_attr(not(test),panic_handler)]
-#[cfg_attr(test, allow(unused))]
+#[cfg_attr(test, allow(unused, reason="Not used if testing"))]
 fn panic_handler(info:&PanicInfo) ->!{
     __panic_impl(info)
 }
@@ -29,6 +39,7 @@ pub extern "C" fn rust_eh_personality() {}
 // Safety: has special prefix
 #[unsafe(no_mangle)]
 #[alloc_error_handler]
+#[cfg(not(test))]
 pub fn __rslibc_oom_error(_: core::alloc::Layout)->!{
     todo!()
 
