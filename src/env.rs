@@ -1,6 +1,14 @@
 //! Handles environment variables
 //! 
-//! An
+//! Holds environment information
+#[cfg(target_has_atomic="ptr")]
+use core::sync::atomic::{AtomicIsize,AtomicPtr,Ordering,Atomic};
+
+static ARGC:AtomicIsize = AtomicIsize::new(0);
+static ARGV:Atomic<*mut *const u8> = AtomicPtr::new(core::ptr::null_mut());
+
+// static ARGV_ARRAY: extern "C" fn(core::ffi::c_int)
+
 
 use core::ffi::{CStr, c_char};
 
@@ -11,7 +19,6 @@ pub struct EnvVars{
     
 }
 
-#[expect(clippy::new_without_default)]
 impl EnvVars{
     pub const fn new()->Self{
         EnvVars {
