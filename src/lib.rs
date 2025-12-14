@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
 #![allow(internal_features, reason ="Uses lang item of eh_personality")]
-#![feature(linkage,lang_items,alloc_error_handler)]
+#![feature(linkage,lang_items,alloc_error_handler,generic_atomic,thread_local)]
 mod panicking;
 mod rt;
 pub mod env;
