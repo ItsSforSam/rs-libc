@@ -73,5 +73,5 @@ level = "deny" # Try to avoid typos
 check-cfg = [
     # This prevents pitfalls of C functions. Like adding strlen + 1
     # with the downside of not following the C spec
-    'cfg(additional-checks)'
+    'cfg(additional-checks,values("on","off")'
 ]
