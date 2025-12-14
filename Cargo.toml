@@ -67,3 +67,11 @@ missing-debug-implementations   = {level = "warn"}
 missing_docs                    = {level = "warn"}
 redundant-lifetimes             = {level = "warn"} # better use less life times when possible
 single-use-lifetimes            = {level = "warn"}
+
+[workspace.lints.rust.unexpected_cfgs]
+level = "deny" # Try to avoid typos
+check-cfg = [
+    # This prevents pitfalls of C functions. Like adding strlen + 1
+    # with the downside of not following the C spec
+    'cfg(additional-checks)'
+]
