@@ -56,7 +56,6 @@ allow_attributes_without_reason = {level = "forbid"}
 undocumented_unsafe_blocks      = {level = "forbid"}
 multiple_unsafe_ops_per_block   = {level = "warn"}
 unnecessary_safety_comment      = {level = "warn"}
-unnecessary_safety_doc          = {level = "warn"}
 dbg_macro                       = {level = "warn" } # prevents dbg being apart of a release
 # These are often just wrappers around new. Especially if new takes no parameters. Just taking up code gen
 new_without_default             = {level = "allow"} 
