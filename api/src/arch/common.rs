@@ -112,5 +112,3 @@ macro_rules! __syscall_convert_to_Result {
     };
 }
 
-
-pub fn syscall()
