@@ -37,6 +37,7 @@ panic = "abort"
 
 [lib]
 crate-type = ["cdylib","lib","staticlib"]
+harness = false
 [lints]
 workspace = true
 # === LINTS ===
