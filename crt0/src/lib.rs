@@ -41,28 +41,25 @@ pub unsafe extern "C" fn start_main(argc:ffi::c_int, unbound_argv: *mut *mut ffi
         // Allows libc to call main as
         unsafe fn main(argc:ffi::c_int, argv: *mut *mut ffi::c_char)-> ffi::c_int;
         /// def in [`api::rt`]
-
-        #[link()]
-        unsafe fn __rslibc_start_entrypoint_1(
+        safe fn __rslibc_start_entrypoint_1(
             mainfn:unsafe extern "C" fn(argc:ffi::c_int, argv: *mut *mut ffi::c_char)-> ffi::c_int,
             argv:*mut *mut ffi::c_char,
             argc:ffi::c_int
         )->!;
     }
-    // SAFETY: There can be no safety gurantees as we are simply passing raw pointer to a foreign function
-    unsafe {__rslibc_start_entrypoint_1(main as _,unbound_argv,argc)};
+        __rslibc_start_entrypoint_1(main as _,unbound_argv,argc);
     
 }
 
 
 
-// We will weakly link to the main panic handler
-#[linkage = "weak"]
-#[expect(clippy::empty_loop,reason="Does not have stuff to implement cleanly")]
+
 #[unsafe(no_mangle)]
-pub extern "Rust" fn __panic_impl(_i:&core::panic::PanicInfo)->!{
+#[linkage = "weak"] // We want to weakly link to rslibc. It it doesn't link properly, just hang
+extern "C" fn __panic_impl(_i:&core::panic::PanicInfo)->!{
+    //@TODO: Crash in some way. It's preferred to make it evident it panicked
     loop{
-        
+        core::hint::spin_loop();
     }
 }
 
@@ -70,6 +67,7 @@ pub extern "Rust" fn __panic_impl(_i:&core::panic::PanicInfo)->!{
 #[cfg_attr(not(test),panic_handler)]
 // #[cfg_attr(test)]
 #[linkage = "weak"]
+#[inline(never)] // Have it so it can be breakpoint in a debugger
 fn panic_handler(info:&core::panic::PanicInfo) ->!{
     __panic_impl(info)
 }
