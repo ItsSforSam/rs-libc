@@ -55,30 +55,30 @@ pub unsafe extern "C" fn __syscall6(a:long,b:long,c:long,d:long,e:long,f:long,g:
 #[macro_export]
 macro_rules! syscall {
     ($sc:expr) => {
-        $crate::arch::common::__syscall_ret($crate::arch::current::syscall0($sc))
+        $crate::arch::common::__syscall_ret($crate::arch::current::syscall0($sc as _))
     };
     ($sc:expr,$a:expr) => {
-        $crate::arch::common::__syscall_ret($crate::arch::current::syscall1($sc,$a as _))
+        $crate::arch::common::__syscall_ret($crate::arch::current::syscall1($sc as _,$a as _))
     };
     ($sc:expr,$a:expr,$b:expr) => {
-        $crate::arch::common::__syscall_ret($crate::arch::current::syscall2($sc,$a as _,$b as _))
+        $crate::arch::common::__syscall_ret($crate::arch::current::syscall2($sc as _,$a as _,$b as _))
     };
 
     ($sc:expr,$a:expr,$b:expr,$c:expr) => {
-        $crate::arch::common::__syscall_ret($crate::arch::current::syscall3($sc,$a as _,$b as _,$c as _))
+        $crate::arch::common::__syscall_ret($crate::arch::current::syscall3($sc as _,$a as _,$b as _,$c as _))
     };
 
     ($sc:expr,$a:expr,$b:expr,$c:expr,$d:expr) => {
-        $crate::arch::common::__syscall_ret($crate::arch::current::syscall4($sc,$a as _,$b as _,$c as _,$d as _))
+        $crate::arch::common::__syscall_ret($crate::arch::current::syscall4($sc as _,$a as _,$b as _,$c as _,$d as _))
     };
 
 
     ($sc:expr,$a:expr,$b:expr,$c:expr,$d:expr,$e:expr) => {
-        $crate::arch::common::__syscall_ret($crate::arch::current::syscall5($sc,$a as _,$b as _,$c as _,$d as _,$e as _))
+        $crate::arch::common::__syscall_ret($crate::arch::current::syscall5($sc as _,$a as _,$b as _,$c as _,$d as _,$e as _))
     };
 
     ($sc:expr,$a:expr,$b:expr,$c:expr,$d:expr,$e:expr,$f:expr) => {
-        $crate::arch::common::__syscall_ret($crate::arch::current::syscall6($sc,$a as _,$b as _,$c as _,$d as _,$e as _,$f as _))
+        $crate::arch::common::__syscall_ret($crate::arch::current::syscall6($sc as _,$a as _,$b as _,$c as _,$d as _,$e as _,$f as _))
     };
 }
 #[doc(hidden)]
