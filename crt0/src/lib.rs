@@ -33,8 +33,7 @@ global_asm!{
 
 
 
-// SAFETY: No name clashes will occur
-// #[unsafe(export_name = "__libc_start_main")]
+
 /// # SAFETY
 /// Should never be called directly by rust
 pub unsafe extern "C" fn start_main(argc:ffi::c_int, unbound_argv: *mut *mut ffi::c_char)->!{
@@ -42,6 +41,8 @@ pub unsafe extern "C" fn start_main(argc:ffi::c_int, unbound_argv: *mut *mut ffi
         // Allows libc to call main as
         unsafe fn main(argc:ffi::c_int, argv: *mut *mut ffi::c_char)-> ffi::c_int;
         /// def in [`api::rt`]
+
+        #[link()]
         unsafe fn __rslibc_start_entrypoint_1(
             mainfn:unsafe extern "C" fn(argc:ffi::c_int, argv: *mut *mut ffi::c_char)-> ffi::c_int,
             argv:*mut *mut ffi::c_char,
