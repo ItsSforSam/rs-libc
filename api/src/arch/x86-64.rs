@@ -4,7 +4,7 @@
 // https://en.wikibooks.org/wiki/X86_Assembly/Interfacing_with_Linux#Via_dedicated_system_call_invocation_instruction
 use core::arch::asm;
 use core::ffi::c_long as long;
-
+//Spell:words nostack
 /// # Safety
 /// Performing a raw syscall with malformed prams can cause undefined behaver
 #[inline(always)]
