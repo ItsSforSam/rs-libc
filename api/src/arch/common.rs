@@ -44,7 +44,9 @@ pub unsafe extern "C" fn __syscall6(a:long,b:long,c:long,d:long,e:long,f:long,g:
 /// # Safety
 /// These don't validate parameters passed to the syscall
 /// 
-/// While syscalls are generally safe, depending on the syscall tho can be unsafe in certain contexts. See [signal-safety(7)]
+/// Ensure the proper type is passed and proper order.
+/// 
+/// While syscalls are generally "safe" if passed correct non malformed parameters, depending on the syscall tho can be unsafe in certain contexts. See [signal-safety(7)]
 /// 
 /// 
 /// [syscall(2)]      : https://man.archlinux.org/man/syscall.2.en
@@ -53,38 +55,39 @@ pub unsafe extern "C" fn __syscall6(a:long,b:long,c:long,d:long,e:long,f:long,g:
 #[macro_export]
 macro_rules! syscall {
     ($sc:expr) => {
-        $crate::arch::common::__syscall_ret($crate::arch::current::syscall0($sc as _))
+        $crate::arch::common::__syscall_ret($crate::arch::current::syscall0($sc))
     };
     ($sc:expr,$a:expr) => {
-        $crate::arch::common::__syscall_ret($crate::arch::current::syscall1($sc as _,$a as _))
+        $crate::arch::common::__syscall_ret($crate::arch::current::syscall1($sc,$a as _))
     };
     ($sc:expr,$a:expr,$b:expr) => {
-        $crate::arch::common::__syscall_ret($crate::arch::current::syscall2($sc as _,$a as _,$b as _))
+        $crate::arch::common::__syscall_ret($crate::arch::current::syscall2($sc,$a as _,$b as _))
     };
 
     ($sc:expr,$a:expr,$b:expr,$c:expr) => {
-        $crate::arch::common::__syscall_ret($crate::arch::current::syscall3($sc as _,$a as _,$b as _,$c as _))
+        $crate::arch::common::__syscall_ret($crate::arch::current::syscall3($sc,$a as _,$b as _,$c as _))
     };
 
     ($sc:expr,$a:expr,$b:expr,$c:expr,$d:expr) => {
-        $crate::arch::common::__syscall_ret($crate::arch::current::syscall4($sc as _,$a as _,$b as _,$c as _,$d as _))
+        $crate::arch::common::__syscall_ret($crate::arch::current::syscall4($sc,$a as _,$b as _,$c as _,$d as _))
     };
 
 
     ($sc:expr,$a:expr,$b:expr,$c:expr,$d:expr,$e:expr) => {
-        $crate::arch::common::__syscall_ret($crate::arch::current::syscall5($sc as _,$a as _,$b as _,$c as _,$d as _,$e as _))
+        $crate::arch::common::__syscall_ret($crate::arch::current::syscall5($sc,$a as _,$b as _,$c as _,$d as _,$e as _))
     };
 
     ($sc:expr,$a:expr,$b:expr,$c:expr,$d:expr,$e:expr,$f:expr) => {
-        $crate::arch::common::__syscall_ret($crate::arch::current::syscall6($sc as _,$a as _,$b as _,$c as _,$d as _,$e as _,$f as _))
+        $crate::arch::common::__syscall_ret($crate::arch::current::syscall6($sc,$a as _,$b as _,$c as _,$d as _,$e as _,$f as _))
     };
 }
 #[doc(hidden)]
+#[inline]
 pub fn __syscall_ret(ret:long)->Result<long,crate::errno::Errno>{
     
     // Some syscalls return large values, like lseek
     // But Linus says non errno returns won't be between -1 and -4095
-    if ret<=-1 && ret>=-4095  {
+    if (-4095..=-1).contains(&ret)  {
         return Err(Errno::try_from(-ret).unwrap());
     }
     
@@ -108,3 +111,6 @@ macro_rules! __syscall_convert_to_Result {
         }
     };
 }
+
+
+pub fn syscall()
