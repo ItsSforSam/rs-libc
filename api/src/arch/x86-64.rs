@@ -17,7 +17,7 @@ pub unsafe fn syscall0(mut sc:long) -> long{
             inout("rax") sc,
             out("rcx") _,
             out("r11")  _,
-            options(nostack)
+            options(nostack, preserves_flags)
         }
 
     }
@@ -37,7 +37,7 @@ pub unsafe fn syscall1(mut sc:long, p1:long) -> long{
             in("rdi")    p1,
             out("rcx")   _,
             out("r11")   _,
-            options(nostack)
+            options(nostack, preserves_flags)
         }
 
     }
@@ -58,7 +58,7 @@ pub unsafe fn syscall2(mut sc:long, p1:long, p2:long) -> long{
             in("rsi")    p2,
             out("rcx")   _,
             out("r11")   _,
-            options(nostack)
+            options(nostack, preserves_flags)
         }
 
     }
@@ -82,7 +82,7 @@ pub unsafe fn syscall3(mut sc:long, p1:long, p2:long,p3:long) -> long{
             // in("r9")     p6,
             out("rcx")   _,
             out("r11")   _,
-            options(nostack)
+            options(nostack, preserves_flags)
         }
 
     }
@@ -106,7 +106,7 @@ pub unsafe fn syscall4(mut sc:long, p1:long, p2:long,p3:long,p4:long) -> long{
             // in("r9")     p6,
             out("rcx")   _,
             out("r11")   _,
-            options(nostack)
+            options(nostack, preserves_flags)
         }
 
     }
@@ -130,7 +130,7 @@ pub unsafe fn syscall5(mut sc:long, p1:long, p2:long,p3:long,p4:long,p5:long) ->
             // in("r9")     p6,
             out("rcx")   _,
             out("r11")   _,
-            options(nostack)
+            options(nostack, preserves_flags)
         }
 
     }
@@ -154,9 +154,11 @@ pub unsafe fn syscall6(mut sc:long, p1:long, p2:long,p3:long,p4:long,p5:long,p6:
             in("r9")     p6,
             out("rcx")   _,
             out("r11")   _,
-            options(nostack)
+            options(nostack, preserves_flags)
         }
 
     }
     sc
 }
+
+
