@@ -4,10 +4,11 @@
 #[cfg(target_has_atomic="ptr")]
 use core::sync::atomic::{AtomicIsize,AtomicPtr,Ordering,Atomic};
 
-static ARGC:AtomicIsize = AtomicIsize::new(0);
-static ARGV:Atomic<*mut *const u8> = AtomicPtr::new(core::ptr::null_mut());
+// These are the raw 
+pub(crate) static ARGC:AtomicIsize = AtomicIsize::new(0);
+pub(crate) static ARGV:Atomic<*mut *const u8> = AtomicPtr::new(core::ptr::null_mut());
 
-// static ARGV_ARRAY: extern "C" fn(core::ffi::c_int)
+
 
 
 use core::ffi::{CStr, c_char};
@@ -20,6 +21,7 @@ pub struct EnvVars{
 }
 
 impl EnvVars{
+    /// Constructs Environment from environ
     pub const fn new()->Self{
         EnvVars {
             
