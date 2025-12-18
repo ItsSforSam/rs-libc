@@ -16,7 +16,10 @@ pub mod arch;
 pub mod errno;
 pub mod stdio;
 pub mod mman;
+pub mod ffi;
 
+#[cfg(feature="alloc")]
+extern crate alloc;
 /// Most syscalls can fail with a errno value
 /// 
 /// This provides an alias that can be used when interacting with this crate
