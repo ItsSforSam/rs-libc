@@ -1,3 +1,4 @@
+//! Allows for standard IO
 use bitflags::bitflags;
 
 use crate::{errno, prelude::*, syscall};
@@ -16,6 +17,8 @@ use crate::{errno, prelude::*, syscall};
 #[non_exhaustive]
 #[repr(C)]
 #[derive(Debug)]
+#[doc(alias = "FILE")]
+#[doc(alias = "IO_FILE")]
 pub struct File {
     /// Will be constant and should always be at the top of the struct
     magic:u32,
@@ -33,9 +36,9 @@ impl File{
         File {
             magic:File::MAGIC,
             ver: File::CURRENT_VERSION,
-
             fd,
             mode
+
         }
     }
     /// Gives back the file descriptor
@@ -214,7 +217,10 @@ bitflags! {
         /// 
         /// [linkat(2)]:https://man.archlinux.org/man/linkat.2.en
         const Temp       = sys::O_TMPFILE;
-
+        /// If (normal) file exists, and allows for writing truncate length to 0.
+        /// If the file is fifo or terminal, then this is ignored
+        /// 
+        /// Otherwise it's "unspecified"
         const Truncate  = sys::O_TRUNC;
         /// All known bits
         const _ = !0;
