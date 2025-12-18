@@ -1,11 +1,8 @@
-use std::ffi::c_void;
+#![allow(missing_docs,reason="build script")]
 use std::path::PathBuf;
 use std::env::var;
 fn main(){
-    cc::Build::new()
-        .cpp(false)
-        .flag("-Wall")
-        .file("");
+    println!("cargo::rustc-link-arg-cdylib=--entry=__libc_main");
 }
 
 
