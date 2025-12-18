@@ -39,7 +39,6 @@ pub extern "C" fn rust_eh_personality() {}
 // Safety: has special prefix
 #[unsafe(no_mangle)]
 #[alloc_error_handler]
-#[cfg(not(test))]
 pub fn __rslibc_oom_error(_: core::alloc::Layout)->!{
     todo!()
 
