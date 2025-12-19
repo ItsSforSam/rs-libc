@@ -3,7 +3,7 @@
 // As the man page of syscall(2) which shows the registers for `int $0x8` for some reason
 // https://en.wikibooks.org/wiki/X86_Assembly/Interfacing_with_Linux#Via_dedicated_system_call_invocation_instruction
 use core::arch::asm;
-use core::ffi::c_long as long;
+use core::ffi::{c_long as long,c_uint};
 //Spell:words nostack
 /// # Safety
 /// Performing a raw syscall with malformed prams can cause undefined behaver

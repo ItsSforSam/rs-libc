@@ -24,7 +24,8 @@ static ALLOCATOR: memory::Allocator = memory::Allocator::new();
 #[unsafe(no_mangle)]
 pub extern "C" fn __libc_main()->!{
     loop{
-
+        // If this hangs then it's being used correctly
+        //@TODO: print version info and metadata
     }
 }
 
