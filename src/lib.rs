@@ -7,7 +7,6 @@
     alloc_error_handler, 
     generic_atomic, // provides Atomics to be easier to read
     thread_local,   // used for errno and protection of double panic
-    panic_unwind    // uses the builtin unwind crate for providing  
 )]
 mod panicking;
 mod rt;
