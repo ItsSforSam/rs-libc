@@ -7,70 +7,88 @@ use crate::{errno, prelude::*, syscall};
 
 
 // This is passed out thru the api
-// 
-// This should be passed as a pointer outwards as `*mut File`
-// But if some reason this was passed to a different version or different
-// libc impl 
+// BUT only as a pointer with the 
 /// A Representation of a open file
 /// 
 /// This can be used with any file descriptor and not strictly a "file"
 #[non_exhaustive]
-#[repr(C)]
+// #[repr(C)]
 #[derive(Debug)]
 #[doc(alias = "FILE")]
 #[doc(alias = "IO_FILE")]
 pub struct File {
-    /// Will be constant and should always be at the top of the struct
-    magic:u32,
-    ver:u32,
-    fd: u64,
+    fd: c_int,
     mode:Mode
 }
 impl File{
-    pub(crate) const MAGIC:u32 = 0xDEADBEEF;
-    // incermint when something is added
-    pub(crate) const CURRENT_VERSION:u32 = 0;
     /// Constructs a `FILE` from a file descriptor
+    /// 
+    /// # SAFETY
+    /// Does not check if a file descriptor is a valid fd. 
+    /// This does not prevent the kernel from checking, and the <code>try_*</code> functions
+    /// returning [`EBADF`]. The non try versions will assume these never occur and cause undefined behaver
+    /// 
+    /// [`EBADF`]: crate::errno::Errno::EBADF
     #[doc(alias = "fdopen")]
-    pub const fn from_fd(fd:u64,mode:Mode)->Self{
+    pub const unsafe fn from_fd_unchecked(fd:c_int,mode:Mode)->Self{
         File {
-            magic:File::MAGIC,
-            ver: File::CURRENT_VERSION,
             fd,
             mode
-
         }
     }
     /// Gives back the file descriptor
     /// 
     /// Use of the getter is due to preventing accidental modification
     /// of the file descriptor, as it should not be changed
-    pub const fn fd(&self)->u64{
+    pub const fn fd(&self)->c_int{
         self.fd
     }
-    /// Gives the magic variable
+    /// A fallible clone
     /// 
-    ///  # Const-ness
-    /// This variable is guaranteed to be the value
-    /// <code>0xDEADBEEF</code>, for rslibc FILE, but other
-    /// libc implementations, or if rslibc's FILE becomes backwards incompatible
-    /// (restructuring the fields where the version cannot be allowed)
-    #[must_use]
-    #[inline]
-    pub fn get_magic(&self)->u32{
-        self.magic
-    }
-    /// Get the version of the struct
+    /// Duplicates a file descriptor
     /// 
-    /// # Const-ness
-    /// While this variable should never change, we should not have
-    /// the compiler assume it is always the case, as that would defeat the point of
-    /// checking it 
-    #[must_use]
-    pub fn get_version(&self)->u32{
-        self.ver
+    /// Calls [dup(2)]
+    /// 
+    /// # Errors
+    /// 
+    /// * [`EBADF`] - if the underlying fd is not a valid file descriptor. This should only occur if [`from_fd_unchecked`] was called with invalid
+    ///   fd. This can safely be guaranteed to never occur if the unsafe function had it's safety guarantees upheld.
+    /// * [`EMFILE`] - Per process limit was reached of open file descriptors
+    /// * [`ENOMEM`] - Insufficient kernel memory is available
+    /// 
+    /// 
+    /// [`EBADF`]: crate::errno::Errno::EBADF
+    /// [`EMFILE`]: crate::errno::Errno::EMFILE
+    /// [`ENOMEM`]: crate::errno::Errno::ENOMEM
+    pub fn try_clone(&self) ->crate::Result<Self>{
+        todo!("Get dup definition")
     }
     
+}
+
+impl Clone for File{
+    /// Clones a file object
+    fn clone(&self) -> Self {
+        
+        match self.try_clone(){
+            Ok(v) => v,
+            Err(v) =>{
+                use crate::errno::Errno::*;
+                match v{
+                    // SAFETY: Should always be valid
+                    EBADE => unsafe{core::hint::unreachable_unchecked()},
+                    #[cfg(feature = "alloc")]
+                    ENOMEM => alloc::alloc::handle_alloc_error(core::alloc::Layout::for_value(self)),
+                    #[cfg(not(feature = "alloc"))]
+                    ENOMEM => panic!("Kernel cannot allocate for new file"),
+                    // SAFETY: No other errnos can be returned as it runs dup underneath
+                    // https://man.archlinux.org/man/dup2.2.en#ERRORS
+                    _ => unsafe{core::hint::unreachable_unchecked()}
+
+                }
+            }
+        }
+    }
 }
 
 fn write(
@@ -189,19 +207,25 @@ bitflags! {
         /// Will cause functions which perform actions on file to fail with [`EBADF`] 
         /// The following can be used with the resulting file descriptor
         ///
-        ///     * close(2).
-        ///     * fchdir(2), if the file descriptor refers to a directory (since Linux 3.5).
-        ///     * fstat(2) (since Linux 3.6).
-        ///     * fstatfs(2) (since Linux 3.12).
+        ///     * [close(2)].
+        ///     * [fchdir(2)], if the file descriptor refers to a directory (since Linux 3.5).
+        ///     * [fstat(2)] (since Linux 3.6).
+        ///     * [fstatfs(2)] (since Linux 3.12).
         ///     * Duplicating the file descriptor (dup(2), fcntl(2) F_DUPFD, etc.).
         ///     * Getting and setting file descriptor flags (fcntl(2) F_GETFD and F_SETFD).
         ///     * Retrieving open file status flags using the fcntl(2) F_GETFL operation: the returned flags will include the bit O_PATH.
         ///     * Passing the file descriptor as the dirfd argument of openat() and the other "*at()" system calls. This includes linkat(2) with AT_EMPTY_PATH (or via procfs using AT_SYMLINK_FOLLOW) even if the file is not a directory.
         ///     * Passing the file descriptor to another process via a UNIX domain socket (see SCM_RIGHTS in unix(7)).
         /// 
-        /// 
-        /// [`EBADF`]:[api::errno::Errno::EBADF]
         /// Available since Linux 2.6.39
+        /// 
+        // @TODO: add links to man page
+        /// [`EBADF`]: api::errno::Errno::EBADF
+        /// [close(2)]
+        /// [fchdir(2)]
+        /// [fstat(2)]
+        /// [fstatfs(2)]
+
         const NoOpen     = sys::O_PATH;
         /// Sync data to the hardware
         const Sync       = sys::O_SYNC;
@@ -245,3 +269,16 @@ bitflags! {
 //         todo!()
 //     }
 // }
+// SAFETY: 0 is always stdin
+pub static STDIN:File = unsafe {File::from_fd_unchecked(0, Mode::Read)};
+// SAFETY: 1 is always stdout
+pub static STDOUT:File = unsafe { File::from_fd_unchecked(1, Mode::Write)};
+// SAFETY: 2 is always stderr
+pub static STDERR:File = unsafe { File::from_fd_unchecked(1, Mode::Write)};
+
+// Basically std::io::Write
+pub trait Write {
+    fn write(&mut self,buf: &[u8]) -> crate::Result<usize>;
+    fn flush(&mut self) -> crate::Result<()>;
+    fn write_all(&mut self, buf:&[u8]) -> crate::Result<()>;
+}
