@@ -6,11 +6,13 @@ license.workspace = true
 publish = true
 [dependencies]
 api           = {path = "api"}
+# backtrace = { version = "0.3.76", default-features = false }
 bitflags = "2.10.0"
 memory        = {path = "memory"}
-unwind = "0.4.2"
+unwinding = { version = "0.2.8", default-features = false, features = ["fde-static","unwinder"]}
+# unwind = "0.4.2"
 [workspace]
-members = ["crt0", "api", "api-sys", "build-utils","arch", "memory", "testlib"]
+members = ["crt0", "api", "api-sys", "build-utils","arch", "memory", "testlib","libc-patch"]
 
 
 [workspace.package]
@@ -76,3 +78,6 @@ check-cfg = [
 
     'cfg()'
 ]
+
+[patch.crates-io]
+libc = {path = "libc-patch"}
