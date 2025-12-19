@@ -2,7 +2,7 @@
 //! 
 //! Holds environment information
 #[cfg(target_has_atomic="ptr")]
-use core::sync::atomic::{AtomicIsize,AtomicPtr,Ordering,Atomic};
+use core::sync::atomic::{AtomicIsize,AtomicPtr,Atomic};
 
 // These are the raw 
 pub(crate) static ARGC:AtomicIsize = AtomicIsize::new(0);
