@@ -7,8 +7,6 @@
 //! 
 use core::{cell::Cell, panic::{PanicInfo, UnwindSafe}};
 
-extern crate unwind;
-
 #[thread_local]
 static PANIC_COUNT:Cell<u8> = Cell::new(0);
 
