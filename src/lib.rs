@@ -2,7 +2,13 @@
 #![no_std]
 #![no_main]
 #![allow(internal_features, reason ="Uses lang item of eh_personality")]
-#![feature(linkage,lang_items,alloc_error_handler,generic_atomic,thread_local)]
+#![feature(linkage,
+    lang_items, // for lang item of eh_personality
+    alloc_error_handler, 
+    generic_atomic, // provides Atomics to be easier to read
+    thread_local,   // used for errno and protection of double panic
+    panic_unwind    // uses the builtin unwind crate for providing  
+)]
 mod panicking;
 mod rt;
 pub mod env;
@@ -18,5 +24,13 @@ static ALLOCATOR: memory::Allocator = memory::Allocator::new();
 /// This is set by the build script
 #[unsafe(no_mangle)]
 pub extern "C" fn __libc_main()->!{
-    todo!("Implement")
+    loop{
+
+    }
+}
+
+/// Meta info for rslib allowed to be parsed by 
+#[allow(warnings, reason = "Auto generated")]
+mod meta{
+    include!(concat!(env!("OUT_DIR"),"/meta.rs"));
 }
