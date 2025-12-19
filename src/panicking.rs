@@ -7,13 +7,14 @@
 //! 
 use core::{cell::Cell, panic::{PanicInfo, UnwindSafe}};
 
+extern crate unwind;
+
 #[thread_local]
 static PANIC_COUNT:Cell<u8> = Cell::new(0);
 
 #[unsafe(no_mangle)]
 pub extern "C" fn __panic_impl(_i:&PanicInfo)->!{
     // No data races occur on thread
-    let val = PANIC_COUNT.get();
     if PANIC_COUNT.get() != 0{
         api::abort();
     }else{
