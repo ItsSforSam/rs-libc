@@ -14,7 +14,7 @@ extern crate api_sys as sys;
 pub mod macros;
 pub mod arch;
 pub mod errno;
-pub mod stdio;
+pub mod io;
 pub mod mman;
 pub mod ffi;
 
