@@ -1,7 +1,9 @@
 //! Allows for standard IO
+use core::sync::atomic::{AtomicBool, Ordering};
+
 use bitflags::bitflags;
 
-use crate::{errno, prelude::*, syscall};
+use crate::{prelude::*, syscall};
 
 
 
@@ -18,7 +20,9 @@ use crate::{errno, prelude::*, syscall};
 #[doc(alias = "IO_FILE")]
 pub struct File {
     fd: c_int,
-    mode:Mode
+    mode:Mode,
+    // ignored on most files, used for special fd
+    lock:AtomicBool
 }
 impl File{
     /// Constructs a `FILE` from a file descriptor
@@ -33,7 +37,10 @@ impl File{
     pub const unsafe fn from_fd_unchecked(fd:c_int,mode:Mode)->Self{
         File {
             fd,
-            mode
+            mode,
+            
+            lock: AtomicBool::new(false)
+            
         }
     }
     /// Gives back the file descriptor
@@ -61,6 +68,7 @@ impl File{
     /// [`EMFILE`]: crate::errno::Errno::EMFILE
     /// [`ENOMEM`]: crate::errno::Errno::ENOMEM
     pub fn try_clone(&self) ->crate::Result<Self>{
+
         todo!("Get dup definition")
     }
     
@@ -250,25 +258,8 @@ bitflags! {
         const _ = !0;
     }
 }
-// impl core::fmt::Debug for Mode{
-//     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        
-//         f.debug_struct("api::Mode")
-//             .field("binary", &self.contains(Mode::binary))
-//             .field("read", &self.contains(Mode::read))
-//             .field("write", &self.contains(Mode::write))
-//             .field("append", &self.contains(Mode::append))
-//             .field("update", &self.contains(Mode::update))
-//             .finish()
-//     }
-// }
-// impl core::str::FromStr for Mode{
-//     type Err;
 
-//     fn from_str(s: &str) -> Result<Self, Self::Err> {
-//         todo!()
-//     }
-// }
+
 // SAFETY: 0 is always stdin
 pub static STDIN:File = unsafe {File::from_fd_unchecked(0, Mode::Read)};
 // SAFETY: 1 is always stdout
@@ -276,9 +267,34 @@ pub static STDOUT:File = unsafe { File::from_fd_unchecked(1, Mode::Write)};
 // SAFETY: 2 is always stderr
 pub static STDERR:File = unsafe { File::from_fd_unchecked(1, Mode::Write)};
 
-// Basically std::io::Write
-pub trait Write {
-    fn write(&mut self,buf: &[u8]) -> crate::Result<usize>;
-    fn flush(&mut self) -> crate::Result<()>;
-    fn write_all(&mut self, buf:&[u8]) -> crate::Result<()>;
+
+
+
+macro_rules! define_outs {
+    (
+        $( $id:ident($fd:literal) = $mode:ident ),*) => {
+        $(
+        #[repr(transparent)]
+        pub struct $id{
+            inner:File
+
+        }
+        impl $id{
+            const fn new()->Self{
+                $id {
+                    // Safety: used for stdout, stderr,stdin, which aren't actual files
+                    inner: unsafe { File::from_fd_unchecked($fd, Mode::$mode)}
+                }
+            }
+        }
+        )*
+    };
 }
+define_outs!(
+    Stdin(0)=Read,
+    Stdout(1)=Write,
+    Stderr(2)=Write
+);
+
+
+
