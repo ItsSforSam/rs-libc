@@ -18,18 +18,30 @@ static ALLOCATOR: memory::Allocator = memory::Allocator::new();
 
 /// This is the "entrypoint" to the dynamic object.
 /// 
-/// This allows providing debug info easily for scripts
+/// This allows providing information like copyright, version info, and where to report bugs
 /// 
-/// This is set by the build script
+/// # ABI Breakage
+/// This function is marked for INTERNAL USE ONLY, which means any use of it can lead to breaking changes
+/// and not officially supported
+/// 
+/// # Safety
+/// This function won't produce undefined behavior when called, BUT is not supposed to be called explicitly, and is simply
+/// used as a entry point for dynamic libraries and shouldn't be called directly
 #[unsafe(no_mangle)]
-pub extern "C" fn __libc_main()->!{
+pub unsafe extern "C" fn __libc_main()->!{
     loop{
-        // If this hangs then it's being used correctly
+        // If this hangs then it's being set correctly
+        // as if a entry isn't set (and `_start` doesn't exist)
+        // it sets to NULL, which just seg faults.
+        // BUT cannot use todo!() as that just panics, which also panics (sometimes it currently uses core::intrinsics::abort()
+        // which doesn't have a stable result)
         //@TODO: print version info and metadata
+        core::hint::spin_loop();
     }
 }
 
-/// Meta info for rslib allowed to be parsed by 
+/// Meta info for rslibc allowed to be parsed by objdump
+// Look at build script for what is being generated
 #[allow(warnings, reason = "Auto generated")]
 mod meta{
     include!(concat!(env!("OUT_DIR"),"/meta.rs"));
