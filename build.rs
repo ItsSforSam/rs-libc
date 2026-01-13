@@ -24,6 +24,13 @@ fn main(){
 // }
 fn gen_meta()->String{
     let version = std::env::var("CARGO_PKG_VERSION").unwrap();
+    let rust_version:String;
+    if let Some(ver) =  version_check::Version::read(){
+        rust_version = format!("{ver}")
+    } else{
+        rust_version = "???".to_string(); // shouldn't be considered stable
+    }
+
     let r = format!(
         r#"
 // Meta information about rslibc
@@ -35,6 +42,11 @@ use core::ffi::c_char;
 #[unsafe(export_name = "rs_version")]
 #[used]
 static NOTE_VERSION:ConstVer = ConstVer(c"{version}".as_ptr());
+#[unsafe(link_section = ".comment.rslib_meta")]
+#[unsafe(export_name = "rustc_version")]
+#[used]
+static RUSTC_VERSION:ConstVer = ConstVer(c"{rust_version}".as_ptr());
+
 #[repr(transparent)]
 struct ConstVer(*const c_char);
 
