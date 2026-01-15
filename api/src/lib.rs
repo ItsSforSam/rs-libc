@@ -2,10 +2,19 @@
 //! 
 //! These allow calling syscalls to the system (currently only Linux)
 #![no_std]
-#![feature(c_variadic)]
-#![feature(thread_local)]
-#![expect(internal_features, reason ="Uses abort intrinsic, which is safe")]
-#![feature(core_intrinsics)]
+#![feature(
+    // Used for the abort intrinsics, which is safe to call, just
+    // has unstable behavior (which on the currently pinned version causes a seg fault)
+    // @TODO: implement abort the way it is actually supposed 
+    core_intrinsics,
+    c_variadic,
+    thread_local,
+    // Allows the compiler
+    // https://gist.github.com/joboet/0cecbce925ee2ad1ee3e5520cec81e30
+    temporary_niche_types
+)]
+#![expect(internal_features,
+    reason ="We will use them in the same way std/alloc/core use them, and will remove them if a stable version (or non internal version) presents itself")]
 
 extern crate api_sys as sys;
 // use bitflags::bitflags;
@@ -17,7 +26,9 @@ pub mod errno;
 pub mod io;
 pub mod mman;
 pub mod ffi;
-
+// Same as std::sys, but 
+pub(crate) mod system;
+pub mod os;
 #[cfg(feature="alloc")]
 extern crate alloc;
 /// Most syscalls can fail with a errno value
