@@ -3,7 +3,7 @@ use core::sync::atomic::{AtomicBool, Ordering};
 
 use bitflags::bitflags;
 
-use crate::{prelude::*, syscall};
+use crate::{os::fd::{AsRawFd, FromRawFd, OwnedFd, RawFd}, prelude::*, syscall};
 
 
 
@@ -19,14 +19,20 @@ use crate::{prelude::*, syscall};
 #[doc(alias = "FILE")]
 #[doc(alias = "IO_FILE")]
 pub struct File {
-    fd: c_int,
-    mode:Mode,
-    // ignored on most files, used for special fd
-    lock:AtomicBool
+    /// The internal file descriptor
+    // This can never be -1
+    fd: crate::os::fd::OwnedFd,
+
+    // mode:Mode,
+    // Since this is used in C code, we shouldn't move it, maybe
+    // _pin:core::marker::PhantomPinned
 }
 impl File{
     /// Constructs a `FILE` from a file descriptor
     /// 
+    /// 
+    /// # PANICS
+    /// If fd is -1 which is never valid
     /// # SAFETY
     /// Does not check if a file descriptor is a valid fd. 
     /// This does not prevent the kernel from checking, and the <code>try_*</code> functions
@@ -34,12 +40,13 @@ impl File{
     /// 
     /// [`EBADF`]: crate::errno::Errno::EBADF
     #[doc(alias = "fdopen")]
-    pub const unsafe fn from_fd_unchecked(fd:c_int,mode:Mode)->Self{
+    pub const unsafe fn from_fd_unchecked(fd:crate::os::fd::RawFd,mode:Mode)->Self{
         File {
-            fd,
-            mode,
-            
-            lock: AtomicBool::new(false)
+            // SAFETY: caller guarantees this a valid file descriptor
+            fd: unsafe { OwnedFd::from_raw_fd(fd)},
+            // mode,
+            // _pin:core::marker::PhantomPinned
+            // lock: AtomicBool::new(false)
             
         }
     }
@@ -47,9 +54,11 @@ impl File{
     /// 
     /// Use of the getter is due to preventing accidental modification
     /// of the file descriptor, as it should not be changed
-    pub const fn fd(&self)->c_int{
-        self.fd
+    pub const fn fd(&self)->RawFd{
+        self.fd.fd.as_inner()
     }
+
+
     /// A fallible clone
     /// 
     /// Duplicates a file descriptor
@@ -70,6 +79,23 @@ impl File{
     pub fn try_clone(&self) ->crate::Result<Self>{
 
         todo!("Get dup definition")
+    }
+    /// Does the same as dropping which closes the file
+    /// 
+    /// # Errors
+    //  - EBADF  : fd is not a valid open file descriptor. This shouldn't occur in most cases
+    /// - EINTR  : the close call was interrupted by a signal
+    /// - EIO    : An I/O error occurred
+    /// - ENOSPEC
+    /// - EDQUOT : On NFS this will not occur until writes that occur after the quota exceeds
+    /// 
+    /// # SAFETY
+    /// Do not use this object if returns [`Ok`] as this uses a reference to ensure you have access
+    /// if it fails
+    pub unsafe fn close(&mut self)->crate::Result<()>{
+        // SAFETY: we own the file descriptor
+        unsafe {close_fd(self.fd())}?;
+        Ok(())
     }
     
 }
@@ -96,6 +122,15 @@ impl Clone for File{
                 }
             }
         }
+    }
+}
+
+impl Drop for File{
+    fn drop(&mut self) {
+        // SAFETY: we own the file descriptor
+        // Here we just ignore
+        unsafe {_ = self.close()}
+        
     }
 }
 
@@ -268,7 +303,15 @@ pub static STDOUT:File = unsafe { File::from_fd_unchecked(1, Mode::Write)};
 pub static STDERR:File = unsafe { File::from_fd_unchecked(1, Mode::Write)};
 
 
-
+/// Same as [close(2)]
+/// 
+/// # Safety
+/// If a fd is owned or used again, can cause undefended behavior
+pub(crate) unsafe fn close_fd(fd: crate::os::fd::RawFd) -> crate::Result<()>{
+    // SAFETY: valid prams
+    unsafe {syscall!(sys::SYS_close,fd)}?;
+    Ok(())
+}
 
 macro_rules! define_outs {
     (
