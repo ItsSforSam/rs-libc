@@ -26,8 +26,6 @@ pub mod errno;
 pub mod io;
 pub mod mman;
 pub mod ffi;
-// Same as std::sys, but 
-pub(crate) mod system;
 pub mod os;
 #[cfg(feature="alloc")]
 extern crate alloc;
