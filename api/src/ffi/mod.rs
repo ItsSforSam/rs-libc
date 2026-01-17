@@ -8,6 +8,5 @@ pub use alloc::ffi::{CString,FromVecWithNulError,IntoStringError,NulError};
 
 /// [`CStr`],[`CString`], and relating types
 pub mod c_str{
-    pub use core::ffi::c_str::*;
-    pub use alloc::ffi::c_str::*;
+    
 }
