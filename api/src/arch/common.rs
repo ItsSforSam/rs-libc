@@ -2,39 +2,8 @@
 #![allow(clippy::missing_safety_doc, reason ="they are wrappers for the most part")]
 #![allow(missing_docs, reason ="wrapper around rust functions to be exported")]
 use core::ffi::{c_long as long,c_ulong as ulong};
-use crate::{arch::current::*, errno::Errno};
+use crate::{errno::Errno};
 
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn __syscall0(a:long)->long{
-    syscall0(a)
-}
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn __syscall1(a:long,b:long)->long{
-    syscall1(a,b)
-}
-
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn __syscall2(a:long,b:long,c:long)->long{
-    syscall2(a,b,c)
-}
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn __syscall3(a:long,b:long,c:long,d:long)->long{
-    syscall3(a,b,c,d)
-}
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn __syscall4(a:long,b:long,c:long,d:long,e:long)->long{
-    syscall4(a,b,c,d,e)
-}
-
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn __syscall5(a:long,b:long,c:long,d:long,e:long,f:long)->long{
-    syscall5(a,b,c,d,e,f)
-}
-
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn __syscall6(a:long,b:long,c:long,d:long,e:long,f:long,g:long)->long{
-    syscall6(a,b,c,d,e,f,g)
-}
 /// A macro which calls a syscall on the system.
 /// 
 /// Similar to [syscall(2)] but returns the raw result and does not update [errno(3)].
