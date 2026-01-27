@@ -9,6 +9,7 @@
     core_intrinsics,
     c_variadic,
     thread_local,
+    const_trait_impl,
     // Allows the compiler
     // https://gist.github.com/joboet/0cecbce925ee2ad1ee3e5520cec81e30
     temporary_niche_types
