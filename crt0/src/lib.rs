@@ -36,6 +36,7 @@ global_asm!{
 
 /// # SAFETY
 /// Should never be called directly by rust
+#[inline(never)]
 pub unsafe extern "C" fn start_main(argc:ffi::c_int, unbound_argv: *mut *mut ffi::c_char)->!{
     unsafe extern "C" {
         // Allows libc to call main as
