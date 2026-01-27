@@ -55,7 +55,7 @@ impl File{
     /// Use of the getter is due to preventing accidental modification
     /// of the file descriptor, as it should not be changed
     pub const fn fd(&self)->RawFd{
-        self.fd.fd.as_inner()
+        self.fd.as_raw_fd()
     }
 
 
