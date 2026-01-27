@@ -1,9 +1,8 @@
 use crate::prelude::*;
-use api_sys as sys;
 use bitflags::bitflags;
 pub fn munmap(addr: *mut c_void,len:usize)->Result<(),crate::errno::Errno>{
     //SAFETY: calls with proper parameters of correct type
-    unsafe {crate::syscall!(sys::SYS_munmap, addr, len)}?;
+    unsafe {crate::syscall!(SYS_munmap, addr, len)}?;
     Ok(())
 }
 
@@ -57,10 +56,8 @@ pub fn mmap(
     offset:c_long
 )->crate::Result<*mut c_void>{
     
-    const MMAP2:core::ffi::c_long = 192; // For some reason the sys crate isn't including
-    // SYS_mmap2, but this is what the defined value is
     //SAFETY: Puts the proper syscall with the proper parameters
-    let v = unsafe {crate::syscall!(MMAP2,
+    let v = unsafe {crate::syscall!(__mmap2_sys,
                     addr,
                     size,
                     proto.bits(),

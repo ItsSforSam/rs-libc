@@ -142,7 +142,7 @@ fn write(
 )->crate::Result<isize>{ // ssize_t
     // SAFETY: Calls the syscall with the proper values
     let v = unsafe{
-        syscall!(api_sys::SYS_write,
+        syscall!(SYS_write,
         fd,
         buffer,
          size)?
@@ -309,7 +309,7 @@ pub static STDERR:File = unsafe { File::from_fd_unchecked(1, Mode::Write)};
 /// If a fd is owned or used again, can cause undefended behavior
 pub(crate) unsafe fn close_fd(fd: crate::os::fd::RawFd) -> crate::Result<()>{
     // SAFETY: valid prams
-    unsafe {syscall!(sys::SYS_close,fd)}?;
+    unsafe {syscall!(SYS_close,fd)}?;
     Ok(())
 }
 

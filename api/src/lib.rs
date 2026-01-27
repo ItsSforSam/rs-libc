@@ -17,7 +17,7 @@
 #![expect(internal_features,
     reason ="We will use them in the same way std/alloc/core use them, and will remove them if a stable version (or non internal version) presents itself")]
 
-extern crate api_sys as sys;
+pub extern crate api_sys as sys;
 // use bitflags::bitflags;
 
 #[macro_use]
@@ -103,11 +103,11 @@ pub fn abort()->!{
 pub fn getpid() -> i32{
     // SAFETY: Provides required params (none)
     // SAFETY: getpid does not error
-    unsafe {syscall!(api_sys::SYS_getpid).unwrap_unchecked() as _}
+    unsafe {syscall!(SYS_getpid).unwrap_unchecked() as _}
 }
 pub fn kill(pid:i32, sig:c_int)->Result<c_int>{
 
     // SAFETY: passes correct prams 
-   let v =unsafe { syscall!(api_sys::SYS_kill,pid,sig)}?;
+   let v =unsafe { syscall!(SYS_kill,pid,sig)}?;
    Ok(v as c_int)
 }
