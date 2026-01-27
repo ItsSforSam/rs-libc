@@ -1,5 +1,7 @@
 //! Represents a owned and borrowed UNIX-like file descriptors
 
+use core::marker::PhantomData;
+
 /// Raw file descriptor
 // If hermit or motor is supported, then just use a i32
 pub type RawFd = core::ffi::c_int;
@@ -8,10 +10,21 @@ pub type RawFd = core::ffi::c_int;
 // supports the niche of not being a negative one (an error)
 type ValidRawFd = core::num::niche_types::NotAllOnes<RawFd>;
 
+/// An owned file descriptor
+/// 
+/// Closes the file on dropped
 #[repr(transparent)]
+// #[rustc_nonnull_optimization_guaranteed]
 #[derive(Debug)]
 pub struct OwnedFd{
-    pub(crate) fd:ValidRawFd
+    fd:ValidRawFd
+}
+
+/// A borrowed file descriptor
+#[derive(Debug)]
+pub struct BorrowedFd<'s>{
+    fd:ValidRawFd,
+    _marker:PhantomData<&'s OwnedFd>
 }
 
 impl OwnedFd{
@@ -29,8 +42,8 @@ impl OwnedFd{
         OwnedFd { fd: ValidRawFd::new(fd).expect("fd != -1") }
     }
 }
-
-pub trait AsRawFd{
+// It being const DOES NOT force 
+pub const trait AsRawFd{
 
     fn as_raw_fd(&self) -> RawFd;
 }
@@ -49,7 +62,14 @@ impl FromRawFd for OwnedFd{
        unsafe { OwnedFd::from_raw_fd(fd)}
     }
 }
-impl AsRawFd for OwnedFd{
+
+impl const AsRawFd for BorrowedFd<'_>{
+    fn as_raw_fd(&self) -> RawFd {
+        self.fd.as_inner()
+    }
+}
+
+impl const AsRawFd for OwnedFd{
     fn as_raw_fd(&self) -> RawFd{
         self.fd.as_inner()
     }
