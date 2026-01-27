@@ -23,31 +23,31 @@ use crate::{errno::Errno};
 /// [errno(3)]        : https://man.archlinux.org/man/errno.3.en
 #[macro_export]
 macro_rules! syscall {
-    ($sc:expr) => {
-        $crate::arch::common::__syscall_ret($crate::arch::current::syscall0($sc as _))
+    ($sc:ident) => {
+        $crate::arch::common::__syscall_ret($crate::arch::current::syscall0($crate::sys::$sc as ::core::ffi::c_long))
     };
-    ($sc:expr,$a:expr) => {
-        $crate::arch::common::__syscall_ret($crate::arch::current::syscall1($sc as _,$a as _))
+    ($sc:ident,$a:expr) => {
+        $crate::arch::common::__syscall_ret($crate::arch::current::syscall1($crate::sys::$sc as ::core::ffi::c_long,$a as _))
     };
-    ($sc:expr,$a:expr,$b:expr) => {
-        $crate::arch::common::__syscall_ret($crate::arch::current::syscall2($sc as _,$a as _,$b as _))
-    };
-
-    ($sc:expr,$a:expr,$b:expr,$c:expr) => {
-        $crate::arch::common::__syscall_ret($crate::arch::current::syscall3($sc as _,$a as _,$b as _,$c as _))
+    ($sc:ident,$a:expr,$b:expr) => {
+        $crate::arch::common::__syscall_ret($crate::arch::current::syscall2($crate::sys::$sc as ::core::ffi::c_long,$a as _,$b as _))
     };
 
-    ($sc:expr,$a:expr,$b:expr,$c:expr,$d:expr) => {
-        $crate::arch::common::__syscall_ret($crate::arch::current::syscall4($sc as _,$a as _,$b as _,$c as _,$d as _))
+    ($sc:ident,$a:expr,$b:expr,$c:expr) => {
+        $crate::arch::common::__syscall_ret($crate::arch::current::syscall3($crate::sys::$sc as ::core::ffi::c_long,$a as _,$b as _,$c as _))
+    };
+
+    ($sc:ident,$a:expr,$b:expr,$c:expr,$d:expr) => {
+        $crate::arch::common::__syscall_ret($crate::arch::current::syscall4($crate::sys::$sc as ::core::ffi::c_long,$a as _,$b as _,$c as _,$d as _))
     };
 
 
-    ($sc:expr,$a:expr,$b:expr,$c:expr,$d:expr,$e:expr) => {
-        $crate::arch::common::__syscall_ret($crate::arch::current::syscall5($sc as _,$a as _,$b as _,$c as _,$d as _,$e as _))
+    ($sc:ident,$a:expr,$b:expr,$c:expr,$d:expr,$e:expr) => {
+        $crate::arch::common::__syscall_ret($crate::arch::current::syscall5($crate::sys::$sc as ::core::ffi::c_long,$a as _,$b as _,$c as _,$d as _,$e as _))
     };
 
-    ($sc:expr,$a:expr,$b:expr,$c:expr,$d:expr,$e:expr,$f:expr) => {
-        $crate::arch::common::__syscall_ret($crate::arch::current::syscall6($sc as _,$a as _,$b as _,$c as _,$d as _,$e as _,$f as _))
+    ($sc:ident,$a:expr,$b:expr,$c:expr,$d:expr,$e:expr,$f:expr) => {
+        $crate::arch::common::__syscall_ret($crate::arch::current::syscall6($crate::sys::$sc as ::core::ffi::c_long,$a as _,$b as _,$c as _,$d as _,$e as _,$f as _))
     };
 }
 #[doc(hidden)]
