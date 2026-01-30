@@ -1,12 +1,13 @@
 //! rslibc runtime
 #![no_std]
 #![no_main]
-#![allow(internal_features, reason ="Uses lang item of eh_personality")]
+#![expect(internal_features, reason ="Uses lang item of eh_personality")]
 #![feature(linkage,
     lang_items, // for lang item of eh_personality
     alloc_error_handler, 
     generic_atomic, // provides Atomics to be easier to read
     thread_local,   // used for errno and protection of double panic
+    likely_unlikely
 )]
 mod panicking;
 mod rt;
