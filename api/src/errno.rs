@@ -44,12 +44,21 @@ macro_rules! def {
                 }
             }
         }
+        #[expect(clippy::from_over_into, reason = "From can fail, while into always succeed")]
         impl ::core::convert::Into<::core::num::NonZero<::core::ffi::c_int>> for Errno{
             #[inline]
             fn into(self) -> ::core::num::NonZero<::core::ffi::c_int> {
                 // use Errno::*;
                 // SAFETY: Errno is never going to have a zero
                 unsafe {::core::num::NonZero::new_unchecked(self as ::core::ffi::c_int)}
+            }
+        }
+        #[expect(clippy::from_over_into, reason = "From can fail, while into always succeed")]
+        impl ::core::convert::Into<::core::ffi::c_int> for Errno{
+            #[inline]
+            /// Same as `self as c_int`
+            fn into(self) -> ::core::ffi::c_int {
+                self as ::core::ffi::c_int
             }
         }
 
