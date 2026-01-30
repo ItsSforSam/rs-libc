@@ -5,7 +5,7 @@
 //! When a panic occurs it should be treated as a unresolvable error.
 //! A backtrace may or may not be given.
 //! 
-use core::{cell::Cell, panic::{PanicInfo, UnwindSafe}};
+use core::{cell::Cell, panic::PanicInfo};
 
 #[thread_local]
 static PANIC_COUNT:Cell<u8> = Cell::new(0);
