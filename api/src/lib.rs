@@ -16,7 +16,7 @@
 )]
 #![expect(internal_features,
     reason ="We will use them in the same way std/alloc/core use them, and will remove them if a stable version (or non internal version) presents itself")]
-
+#[no_link]
 pub extern crate api_sys as sys;
 // use bitflags::bitflags;
 
@@ -55,30 +55,6 @@ pub mod prelude{
     pub use crate::errno::{Errno,ERRNO};
 }
 use prelude::*;
-// # Safety
-// Calling 
-// pub unsafe extern "C" fn syscall(_call:c_long,mut args:...) -> c_long{
-//     // @TODO make list
-//     let a:c_long;
-//     let b:c_long;
-//     let c:c_long;
-//     let d:c_long;
-//     let e:c_long;
-//     let f:c_long;
-//     let g:c_long;
-//     // Safety: We may just clobber
-//     unsafe{
-//         a=args.arg();
-//         b=args.arg();
-//         c=args.arg();
-//         d=args.arg();
-//         e=args.arg();
-//         f=args.arg();
-//         g=args.arg();
-//         crate::arch::current::syscall6(a, b, c, d, e, f, g)
-//     }
-    
-// }
 
 
 
