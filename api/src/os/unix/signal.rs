@@ -1,8 +1,8 @@
 use core::mem::MaybeUninit;
 use core::ffi::{c_int, c_void};
 
-type SAHandler = *mut extern "C" fn(c_int); 
-type SASigaction = *mut extern "C" fn(c_int,*mut siginfo,*mut c_void);
+type SAHandler = Option<extern "C" fn(c_int)>; 
+type SASigaction = Option<extern "C" fn(c_int,*mut siginfo,*mut c_void)>;
 /// Representation of the sigaction struct
 #[repr(C)]
 #[derive(Debug)]
@@ -19,7 +19,7 @@ pub struct sigaction{
     sa_sigaction:SASigaction,
     sa_mask: sigset_t,
     sa_flags: c_int,
-    sa_restorer: *mut extern "C" fn()
+    sa_restorer: Option<extern "C" fn()>
 }
 #[cfg(target_arch = "x86")]
 union UnionSigAction{
