@@ -66,7 +66,7 @@ use prelude::*;
 #[expect(unreachable_code, reason = "We are trying to kill this program no matter what. So we try multiple never functions, even if they siminly never return")]
 pub fn abort()->!{
     // @TODO: unmask signal 
-    kill(getpid(), api_sys::SIGABRT as _);
+    let _ = kill(getpid(), api_sys::SIGABRT as _);
 
     core::intrinsics::abort();
     // SAFETY: Technically this is UB, but we are intentionally accessing an invalid address. But most
