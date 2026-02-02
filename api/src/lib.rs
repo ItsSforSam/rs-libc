@@ -87,3 +87,28 @@ pub fn kill(pid:i32, sig:c_int)->Result<c_int>{
    let v =unsafe { syscall!(SYS_kill,pid,sig)}?;
    Ok(v as c_int)
 }
+/// This is the equivalent to the [_exit(3p)]
+/// 
+/// Like glibc, on Linux systems this function calls [exit_group(2)] under the hood which terminates
+/// all threads on the running process.
+/// On all other Unix systems this currently just runs the normal exit syscall, but this may change
+/// 
+/// 
+/// The value <code>status & 0xFF</code> is returned to the parent process as the process's exit status,
+/// and can be collected by the parent using one of the [wait(2)] family of calls.
+/// 
+/// [_exit(3p)]: https://man.archlinux.org/man/exit.3p.en
+/// [exit_group(2)]:https://man.archlinux.org/man/exit_group.2.en
+/// [wait(2)]:https://man.archlinux.org/man/wait.2.en
+#[unsafe(export_name = "_exit")]
+pub extern "C" fn quick_exit(status:c_int) -> !{
+    // SAFETY: proper parameters and type is passed
+    #[cfg(target_os = "linux")]
+    unsafe {syscall!(SYS_exit_group,status);}
+    #[cfg(not(all(target_os = "linux",unix)))]
+    unsafe {syscall!(SYS_exit,status);}
+    #[cfg(not(unix))]
+    todo!("Implement this for Windows target and other non-Unix"); // Should try to port to Windows as a whole
+    // SAFETY: the syscall guarantees that the system has exited at this point
+    unsafe {core::hint::unreachable_unchecked()}
+}
