@@ -101,6 +101,9 @@ pub fn kill(pid:i32, sig:c_int)->Result<c_int>{
 /// [exit_group(2)]:https://man.archlinux.org/man/exit_group.2.en
 /// [wait(2)]:https://man.archlinux.org/man/wait.2.en
 #[unsafe(export_name = "_exit")]
+#[doc(alias = "_exit")]
+#[doc(alias = "_Exit")]
+#[expect(unused_must_use, reason = "Resulted from syscall, but syscall never returns")]
 pub extern "C" fn quick_exit(status:c_int) -> !{
     // SAFETY: proper parameters and type is passed
     #[cfg(target_os = "linux")]
