@@ -10,7 +10,13 @@ use core::{cell::Cell, panic::PanicInfo};
 #[thread_local]
 static PANIC_COUNT:Cell<u8> = Cell::new(0);
 
+/// 
+/// 
+/// # ABI Breakage
+/// This function is marked for INTERNAL USE ONLY, which means any use of it can lead to breaking changes
+/// and not officially supported
 #[unsafe(no_mangle)]
+#[doc(hidden)]
 pub extern "C" fn __panic_impl(_i:&PanicInfo)->!{
     // No data races occur on thread
     if PANIC_COUNT.get() != 0{
