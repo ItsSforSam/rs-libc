@@ -18,6 +18,7 @@ use crate::{os::fd::{AsRawFd, FromRawFd, OwnedFd, RawFd}, prelude::*, syscall};
 #[derive(Debug)]
 #[doc(alias = "FILE")]
 #[doc(alias = "IO_FILE")]
+#[cfg_attr(test, repr(C))]
 pub struct File {
     /// The internal file descriptor
     // This can never be -1
