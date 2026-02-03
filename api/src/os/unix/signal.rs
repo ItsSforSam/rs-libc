@@ -1,4 +1,4 @@
-use core::mem::MaybeUninit;
+use core::mem::{self, MaybeUninit};
 use core::ffi::{c_int, c_void};
 
 type SAHandler = Option<extern "C" fn(c_int)>; 
@@ -12,23 +12,89 @@ pub struct sigaction{
     // The actual kernel includes has them be a union only
     // if __i386__ is defined, which is only defined on x86_32 
     #[cfg(target_arch = "x86")]
-    action:UnionSigAction,
+    sa_handler:MaybeUninit<UnionSigAction>,
     #[cfg(not(target_arch = "x86"))]
-    sa_handler:SAHandler,
+    sa_handler:MaybeUninit<SAHandler>,
     #[cfg(not(target_arch = "x86"))]
-    sa_sigaction:SASigaction,
+    sa_sigaction:MaybeUninit<SASigaction>,
     sa_mask: sigset_t,
     sa_flags: c_int,
     sa_restorer: Option<extern "C" fn()>
 }
-#[cfg(target_arch = "x86")]
+// #[cfg(target_arch = "x86")]
+#[repr(C)]
 union UnionSigAction{
-    sa_handler:*mut SAHandler,
+    sa_handler:SAHandler,
     sa_sigaction:SASigaction
 
 }
-pub enum SigAction {
-    
+
+
+impl sigaction{
+    pub fn new(action:SigActionHandler, flags:c_int,mask:sigset_t)->sigaction{
+        
+        let mut r = sigaction {
+            
+            sa_handler: MaybeUninit::zeroed(),
+            #[cfg(not(target_arch = "x86"))]
+            sa_sigaction: MaybeUninit::zeroed(),
+            sa_mask: mask,
+            sa_flags: flags,
+            sa_restorer: None
+        };
+        match action{
+            SigActionHandler::Default => {
+                r.sa_handler.write(None); // SIG_DFL
+            }
+            SigActionHandler::Ignore => {
+                let ignore  = core::ptr::without_provenance::<SAHandler>(1);
+                
+                // NOTE: why is attributes on expressions nightly? It should at least work with lint attrs
+                #[expect(clippy::missing_transmute_annotations, reason = "Annotation is above, and can vary on platform")]
+                {
+                // SAFETY: Casting a raw unaligned pointer to MaybeUninit<fn(...)> which will be a valid state
+                // as this is passed to the kernel which checks if it's 0 or 1 before deref
+                // Rust should not treat this a reference and dereference it
+                r.sa_handler = unsafe {mem::transmute(ignore)};
+
+                }
+            
+            },
+            SigActionHandler::Handler(h) => {
+                #[cfg(target_arch = "x86")]
+                let h = UnionSigAction {sa_handler: h };
+                // #[cfg(not(target_arch = "x86"))]
+                r.sa_handler.write(h);
+            },
+            SigActionHandler::Action(h) =>{
+
+                cfg_if::cfg_if!{
+                    if #[cfg(target_arch="x86")]{
+                        r.sa_handler.write(UnionSigAction {sa_sigaction: h });
+                    } else{
+                        r.sa_sigaction.write(h);
+                    }
+                }
+                
+                
+            }
+        };
+
+        r
+        
+    }
+}
+
+#[derive(Debug,Default)]
+pub enum SigActionHandler {
+    // Default signal handler for a given signal
+    #[default]
+    Default,
+    // Ignore
+    Ignore,
+    Handler(SAHandler),
+    Action(SASigaction)
+
 }
 #[repr(C)]
 pub struct siginfo{
