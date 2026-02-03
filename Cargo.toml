@@ -12,7 +12,7 @@ memory        = {path = "memory"}
 unwinding = { version = "0.2.8", default-features = false, features = ["fde-static","unwinder"]}
 # unwind = "0.4.2"
 [workspace]
-members = ["crt0", "api", "api-sys", "build-utils","arch", "memory", "testlib","libc-patch"]
+members = ["crt0", "api", "api-sys", "build-utils","arch", "memory","libc-patch"]
 
 
 [workspace.package]
@@ -30,6 +30,7 @@ version_check = "0.9.5"
 [features]
 # This prevents pitfalls of C functions. Like adding strlen + 1
 # with the downside of not following the C spec
+# @TODO: Not implemented
 additional-checks = []
 
 [profile.dev]
@@ -78,6 +79,3 @@ check-cfg = [
 
     'cfg()'
 ]
-
-[patch.crates-io]
-libc = {path = "libc-patch"}
