@@ -262,3 +262,27 @@ impl Display for InvalidIntToErrnoError{
 }
 
 impl core::error::Error for InvalidIntToErrnoError{}
+
+#[doc(hidden)]
+pub trait MapErr<T>{
+
+    fn set_errno(self) -> Option<T>;
+}
+
+impl<T> MapErr<T> for Result<T,Errno>{
+    /// Sets [`Errno`] to the [`ERRNO`] thread local variable
+    /// and returns the Option of success value
+    /// 
+    /// If [`None`] then the [`Errno`] was set, 
+    /// the [`Some`] varient contains the same value as [`Ok`]  
+    fn set_errno(self) -> Option<T> {
+        match self{
+            Ok(v) => Some(v),
+            Err(v) => {
+                ERRNO.set(v as i32);
+                None
+            }
+
+        }
+    }
+}
