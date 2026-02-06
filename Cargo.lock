@@ -291,6 +291,7 @@ dependencies = [
  "api",
  "bitflags",
  "cc",
+ "cfg-if",
  "memory",
  "unwinding",
  "version_check",

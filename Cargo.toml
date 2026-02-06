@@ -8,6 +8,7 @@ publish = true
 api           = {path = "api"}
 # backtrace = { version = "0.3.76", default-features = false }
 bitflags = "2.10.0"
+cfg-if = "1.0.4"
 memory        = {path = "memory"}
 unwinding = { version = "0.2.8", default-features = false, features = ["fde-static","unwinder"]}
 # unwind = "0.4.2"
