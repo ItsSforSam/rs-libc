@@ -18,8 +18,8 @@
     reason ="We will use them in the same way std/alloc/core use them, and will remove them if a stable version (or non internal version) presents itself")]
 #[no_link]
 pub extern crate api_sys as sys;
-// use bitflags::bitflags;
-
+#[no_link]
+extern crate cfg_if;
 #[macro_use]
 pub mod macros;
 pub mod arch;
@@ -54,6 +54,7 @@ pub mod prelude{
     pub use crate::{c_size_t,c_ssize_t};
     pub use crate::errno::{Errno,ERRNO};
 }
+use cfg_if::cfg_if;
 use prelude::*;
 
 

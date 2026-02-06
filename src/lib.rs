@@ -12,8 +12,10 @@
 mod panicking;
 mod rt;
 pub mod env;
+// mod mem;
 extern crate alloc;
-
+#[no_link]
+extern crate cfg_if;
 #[global_allocator]
 static ALLOCATOR: memory::Allocator = memory::Allocator::new();
 
@@ -41,9 +43,31 @@ pub unsafe extern "C" fn __libc_main()->!{
     }
 }
 
+
+pub fn exit(){
+        cfg_if::cfg_if!{
+        if #[cfg(target_has_atomic)]{
+            use core::sync::atomic::{Ordering,AtomicBool}
+            static ISEXITING: AtomicBool =AtomicBool::new(false);
+
+            match ISEXITING.compare_exchange(
+                false,
+                true,
+                Ordering::Acquire,
+                Ordering::Relaxed){
+                    // @TODO: do atexit functions
+                    Ok(true) => todo!(),
+                    Err(false) => todo!(),
+                    _ => unreachable!("Only true can be ok and false be err")
+            }
+            
+        }
+    }
+}
 /// Meta info for rslibc allowed to be parsed by objdump
 // Look at build script for what is being generated
 #[allow(warnings, reason = "Auto generated")]
 mod meta{
     include!(concat!(env!("OUT_DIR"),"/meta.rs"));
 }
+
