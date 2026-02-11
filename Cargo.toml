@@ -13,7 +13,7 @@ memory        = {path = "memory"}
 unwinding = { version = "0.2.8", default-features = false, features = ["fde-static","unwinder"]}
 # unwind = "0.4.2"
 [workspace]
-members = ["crt0", "api", "api-sys", "build-utils","arch", "memory","libc-patch"]
+members = ["crt0", "api", "api-sys","arch", "memory","libc-patch"]
 
 
 [workspace.package]

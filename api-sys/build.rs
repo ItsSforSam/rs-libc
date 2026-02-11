@@ -12,20 +12,6 @@ fn main(){
     println!("cargo::rerun-if-changed=wrapper.h");
     println!("cargo::rerun-if-changed=../include");
     let out_path:PathBuf = PathBuf::from(env::var_os("OUT_DIR").expect("OUT_DIR env not set, are you using cargo?"));
-    
-    /*
-    api:PathBuf;
-    let api:PathBuf = PathBuf::from(env::var_os("OS_API").unwrap_or("/usr/include/linux/".into()));
-    */
-    // let bindings = bindgen::Builder::default().header("wrapper.h").generate().expect("Failed to gen bindings");
-    // let unistd = &out_path.join("unistd.rs");
-    // // println!("{}", unistd.display());
-    // bindings.write_to_file(unistd).expect("Failed to write bindings");
-    
-    // bindgen::Builder::default()
-    // .header("../include/sys/syscall.h")
-    // .generate().expect("Failed to gen bindings for syscall.h")
-    // .write_to_file(out_path.join("syscall.rs")).unwrap();
     gen_bindings("wrapper.h", "unistd.rs", &out_path);
 }
 // use bindgen::BindgenError;
@@ -68,53 +54,3 @@ fn gen_bindings(header:&str,output:&str,out_path: &Path){
             }
         });
 }
-
-
-
-fn get_includes() -> String{
-    use std::env::VarError;
-    
-    match std::env::var("CPATH") {
-        Ok(ref v) => {
-                            
-                            match std::fs::exists(v){
-                                Ok(b) => {
-                                    if b{
-                                        return v.clone();
-                                    } else{
-                                        panic!("An invalid include path at `{v}`")
-                                    }
-                                },
-                                Err(e) => panic!("An error occurred accessing path at {v}. Error: {e}")
-
-                            }
-
-                        },
-        #[cfg(unix)]
-        Err(VarError::NotPresent) => String::from("/usr/include"),
-        #[cfg(unix)]
-        Err(VarError::NotUnicode(v)) => panic!("Non UTF-8 value from `CPATH` (bindgen requires valid UTF-8). Value if {}", v.display()),
-        #[cfg(not(unix))]
-        Err(_) => unimplemented!("Linux is the only supported OS currently")
-    }
-}
-
-fn handle_includes_err(err:std::io::Error){}
-// // fn gen_headers(f:&Path) -> io::Result<()>{
-// //     let mut dir:Vec<&Path> = Vec::new();
-// //     for b in fs::read_dir(f)?{
-// //         let file = b?;
-// //         let meta = file.metadata()?;
-// //         if meta.is_dir() {
-// //             dir.push(&file.path());
-// //             continue;
-// //         } else if !meta.file_type().is_file() {
-// //             unreachable!(); // There shouldn't be these irregular files within with includes 
-// //         }
-            
-// //         let name = Path::new(&file.file_name()).file_stem();
-// //         
-
-// //     }
-// //     Ok(())
-// // }
