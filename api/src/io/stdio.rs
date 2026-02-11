@@ -20,6 +20,7 @@ use crate::{os::fd::{AsRawFd, FromRawFd, OwnedFd, RawFd}, prelude::*, syscall};
 #[doc(alias = "IO_FILE")]
 #[cfg_attr(test, repr(C))]
 pub struct File {
+    // @NOTE: if more fields are added, edit close_explicitly to ensure no leaks occur 
     /// The internal file descriptor
     // This can never be -1
     fd: crate::os::fd::OwnedFd,
@@ -81,22 +82,28 @@ impl File{
 
         todo!("Get dup definition")
     }
-    /// Does the same as dropping which closes the file
+    /// Does the same as dropping which closes the file. And returns any errors
     /// 
     /// # Errors
-    //  - EBADF  : fd is not a valid open file descriptor. This shouldn't occur in most cases
+    /// Returns a tuple of `(Self,Errno)` so you can still operate on the File after a error as 
+    /// 
+    ///  - EBADF  : fd is not a valid open file descriptor. This shouldn't occur in most cases
     /// - EINTR  : the close call was interrupted by a signal
     /// - EIO    : An I/O error occurred
     /// - ENOSPEC
     /// - EDQUOT : On NFS this will not occur until writes that occur after the quota exceeds
     /// 
-    /// # SAFETY
-    /// Do not use this object if returns [`Ok`] as this uses a reference to ensure you have access
-    /// if it fails
-    pub unsafe fn close(&mut self)->crate::Result<()>{
+    pub fn close_explicitly(self)->Result<(),(Self,Errno)>{
+        // This makes sure we don't drop the value twice, which can cause undefined behaver
+        let f = core::mem::ManuallyDrop::new(self);
         // SAFETY: we own the file descriptor
-        unsafe {close_fd(self.fd())}?;
-        Ok(())
+        match unsafe {close_fd((&f).fd())}{
+            Ok(_) => {
+            
+                Ok(())
+            },
+            Err(e) => Err((core::mem::ManuallyDrop::into_inner(f), e))
+        }
     }
     
 }
@@ -123,15 +130,6 @@ impl Clone for File{
                 }
             }
         }
-    }
-}
-
-impl Drop for File{
-    fn drop(&mut self) {
-        // SAFETY: we own the file descriptor
-        // Here we just ignore
-        unsafe {_ = self.close()}
-        
     }
 }
 
@@ -308,7 +306,7 @@ pub static STDERR:File = unsafe { File::from_fd_unchecked(1, Mode::Write)};
 /// 
 /// # Safety
 /// If a fd is owned or used again, can cause undefended behavior
-pub(crate) unsafe fn close_fd(fd: crate::os::fd::RawFd) -> crate::Result<()>{
+pub unsafe fn close_fd(fd: crate::os::fd::RawFd) -> crate::Result<()>{
     // SAFETY: valid prams
     unsafe {syscall!(SYS_close,fd)}?;
     Ok(())

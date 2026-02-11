@@ -1,6 +1,6 @@
 //! IO operations
 //! 
-mod stdio;
+pub(crate) mod stdio;
 pub use stdio::{File,Mode};
 
 pub trait Write {

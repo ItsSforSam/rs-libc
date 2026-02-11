@@ -74,3 +74,10 @@ impl const AsRawFd for OwnedFd{
         self.fd.as_inner()
     }
 }
+
+impl Drop for OwnedFd{
+    fn drop(&mut self) {
+        // SAFETY: Owned fd should mean this is the only reference to the fd
+        _ = unsafe {crate::io::stdio::close_fd(self.fd.as_inner())}
+    }
+}
