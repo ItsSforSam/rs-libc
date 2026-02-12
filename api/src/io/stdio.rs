@@ -107,6 +107,20 @@ impl File{
     }
     
 }
+impl crate::io::Write for File{
+    fn write(&mut self,buf: &[u8]) -> crate::Result<usize> {
+        let ret = write(
+            self.fd(),
+            buf.as_ptr() as *const c_void,
+            buf.len()
+        )?;
+        Ok(ret as usize)
+    }
+
+    fn flush(&mut self) -> crate::Result<()> {
+        fsync(self.fd())
+    }
+}
 
 impl Clone for File{
     /// Clones a file object
@@ -294,21 +308,24 @@ bitflags! {
 }
 
 
-// SAFETY: 0 is always stdin
-pub static STDIN:File = unsafe {File::from_fd_unchecked(0, Mode::Read)};
-// SAFETY: 1 is always stdout
-pub static STDOUT:File = unsafe { File::from_fd_unchecked(1, Mode::Write)};
-// SAFETY: 2 is always stderr
-pub static STDERR:File = unsafe { File::from_fd_unchecked(1, Mode::Write)};
-
-
 /// Same as [close(2)]
 /// 
 /// # Safety
-/// If a fd is owned or used again, can cause undefended behavior
+/// If a fd is currently owned or this is used again, can cause undefended behavior
 pub unsafe fn close_fd(fd: crate::os::fd::RawFd) -> crate::Result<()>{
     // SAFETY: valid prams
     unsafe {syscall!(SYS_close,fd)}?;
+    Ok(())
+}
+/// Sync data to disk, won't sync file metadata
+/// 
+/// Look at [fsync(2)] for more details
+/// 
+/// [fsync(2)]: https://man.archlinux.org/man/fsync.2.en
+// @TODO: better docs
+pub fn fsync(fd:RawFd)->crate::Result<()>{
+    // SAFETY: correct prams and types passed
+    unsafe {syscall!(SYS_fsync,fd)?;}
     Ok(())
 }
 
@@ -316,26 +333,17 @@ macro_rules! define_outs {
     (
         $( $id:ident($fd:literal) = $mode:ident ),*) => {
         $(
-        #[repr(transparent)]
-        pub struct $id{
-            inner:File
+        
+            // Safety: used for stdout, stderr,stdin, which aren't actual files
+            static $id: File =  unsafe { File::from_fd_unchecked($fd, Mode::$mode)};
 
-        }
-        impl $id{
-            const fn new()->Self{
-                $id {
-                    // Safety: used for stdout, stderr,stdin, which aren't actual files
-                    inner: unsafe { File::from_fd_unchecked($fd, Mode::$mode)}
-                }
-            }
-        }
         )*
     };
 }
 define_outs!(
-    Stdin(0)=Read,
-    Stdout(1)=Write,
-    Stderr(2)=Write
+    STDIN(0)=Read,
+    STDOUT(1)=Write,
+    STDERR(2)=Write
 );
 
 
