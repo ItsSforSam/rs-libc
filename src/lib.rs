@@ -44,24 +44,25 @@ pub unsafe extern "C" fn __libc_main()->!{
 }
 
 
-pub fn exit(){
-        cfg_if::cfg_if!{
-        if #[cfg(target_has_atomic)]{
-            use core::sync::atomic::{Ordering,AtomicBool}
-            static ISEXITING: AtomicBool =AtomicBool::new(false);
+pub fn exit()->!{
+    todo!("Implement exit function with atexit");
+    cfg_if::cfg_if!{
+    if #[cfg(target_has_atomic)]{
+        use core::sync::atomic::{Ordering,AtomicBool};
+        static ISEXITING: AtomicBool =AtomicBool::new(false);
 
-            match ISEXITING.compare_exchange(
-                false,
-                true,
-                Ordering::Acquire,
-                Ordering::Relaxed){
-                    // @TODO: do atexit functions
-                    Ok(true) => todo!(),
-                    Err(false) => todo!(),
-                    _ => unreachable!("Only true can be ok and false be err")
-            }
-            
+        match ISEXITING.compare_exchange(
+            false,
+            true,
+            Ordering::Acquire,
+            Ordering::Relaxed){
+                // @TODO: do atexit functions
+                Ok(true) => todo!(),
+                Err(false) => todo!(),
+                _ => unreachable!("Only true can be ok and false be err")
         }
+        
+    }
     }
 }
 /// Meta info for rslibc allowed to be parsed by objdump
