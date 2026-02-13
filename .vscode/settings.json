@@ -6,6 +6,7 @@
         "globl",
         "libc",
         "MMAP",
+        "pthreads",
         "repr",
         "rslibc",
         "somereason",
