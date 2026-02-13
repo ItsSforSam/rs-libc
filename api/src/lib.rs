@@ -12,7 +12,7 @@
     const_trait_impl,
     // Allows the compiler
     // https://gist.github.com/joboet/0cecbce925ee2ad1ee3e5520cec81e30
-    temporary_niche_types
+    temporary_niche_types,
 )]
 #![expect(internal_features,
     reason ="We will use them in the same way std/alloc/core use them, and will remove them if a stable version (or non internal version) presents itself")]
@@ -28,6 +28,7 @@ pub mod io;
 pub mod mman;
 pub mod ffi;
 pub mod os;
+pub mod threading;
 #[cfg(feature="alloc")]
 extern crate alloc;
 /// Most syscalls can fail with a errno value
