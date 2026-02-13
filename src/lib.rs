@@ -9,6 +9,7 @@
     thread_local,   // used for errno and protection of double panic
     likely_unlikely
 )]
+use compiler_builtins as _; // Exposes required functions for C which are expected, will raise linker errors
 mod panicking;
 mod rt;
 pub mod env;
