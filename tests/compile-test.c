@@ -2,5 +2,5 @@
 // _STDIO_H
 int main(void){
     
-    return 12;
+    return 0;
 }
