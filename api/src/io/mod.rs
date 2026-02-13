@@ -7,7 +7,7 @@ use crate::errno::Errno;
 
 /// Trait for objects which are byte-oriented sincks
 /// 
-/// This follows the same schematics as [`std::io::Write`]
+/// This follows closely to the schematics as [`std::io::Write`]
 /// 
 /// [`std::io::Write`]:https://doc.rust-lang.org/std/io/trait.Write.html
 pub trait Write {
@@ -45,4 +45,13 @@ pub trait Write {
         }
         Ok(())
     }
+}
+/// Allows reading bytes from a source
+/// 
+/// This follows closely to the schematics as [`std::io::Read`]
+/// 
+/// [`std::io::Read`]: https://doc.rust-lang.org/std/io/trait.Read.html
+pub trait Read {
+    /// Pull data from source and 
+    fn read(&mut self, buf:&mut [u8])->crate::Result<usize>;
 }
