@@ -52,6 +52,12 @@ impl File{
             
         }
     }
+    pub fn write(&self,buf:&[u8])->crate::Result<usize>{
+        self.fd.write(buf)
+    }
+    pub fn read(&self,buf:& mut[u8])->crate::Result<usize>{
+        self.fd.read(buf)
+    }
     /// Gives back the file descriptor
     /// 
     /// Use of the getter is due to preventing accidental modification
@@ -107,18 +113,19 @@ impl File{
     }
     
 }
+
+impl super::Read for File{
+    fn read(&mut self, buf:&mut [u8])->crate::Result<usize> {
+        self.fd.read(buf)
+    }
+}
 impl crate::io::Write for File{
     fn write(&mut self,buf: &[u8]) -> crate::Result<usize> {
-        let ret = write(
-            self.fd(),
-            buf.as_ptr() as *const c_void,
-            buf.len()
-        )?;
-        Ok(ret as usize)
+        self.fd.write(buf)
     }
 
     fn flush(&mut self) -> crate::Result<()> {
-        fsync(self.fd())
+        self.fd.flush()
     }
 }
 
@@ -147,12 +154,12 @@ impl Clone for File{
     }
 }
 
-fn write(
+pub fn write(
     fd:c_int,
     buffer:*const c_void,
     size: usize
 
-)->crate::Result<isize>{ // ssize_t
+)->crate::Result<usize>{ // size_t -1 is for errors which is why it's ssize_t
     // SAFETY: Calls the syscall with the proper values
     let v = unsafe{
         syscall!(SYS_write,
@@ -161,8 +168,9 @@ fn write(
          size)?
         };
         
-        Ok(v as isize)
+        Ok(v as usize)
     }
+
 bitflags! {
     /// File mode options
     /// 
@@ -317,17 +325,7 @@ pub unsafe fn close_fd(fd: crate::os::fd::RawFd) -> crate::Result<()>{
     unsafe {syscall!(SYS_close,fd)}?;
     Ok(())
 }
-/// Sync data to disk, won't sync file metadata
-/// 
-/// Look at [fsync(2)] for more details
-/// 
-/// [fsync(2)]: https://man.archlinux.org/man/fsync.2.en
-// @TODO: better docs
-pub fn fsync(fd:RawFd)->crate::Result<()>{
-    // SAFETY: correct prams and types passed
-    unsafe {syscall!(SYS_fsync,fd)?;}
-    Ok(())
-}
+
 
 macro_rules! define_outs {
     (
