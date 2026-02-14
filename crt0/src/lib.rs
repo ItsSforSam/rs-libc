@@ -1,7 +1,12 @@
 //! Starts up the C runtime
 #![no_main]
 #![no_std]
-#![feature(linkage)]
+#![feature(
+    linkage,
+    lang_items
+)]
+#![expect(internal_features,reason="To shut rust up about no eh_personality")]
+
 use core::ffi;
 use core::arch::global_asm;
 
@@ -21,12 +26,12 @@ global_asm!{
     ".type _start, @function",
     "_start:",
         "endbr64",
+        
         "call {libc_start}",
         
-        "mov rdi, rax",
-
-        "mov rax, 60",
-        "syscall",
+        // If it returns (it shouldn't just invoke an invalid instruction)
+        // Set's do hlt right here which is valid but requires ring0 access
+        "hlt",
     // Exits program
     libc_start = sym start_main, // Allows name mangling and not exporting it out of obj file unnecessarily
 }
@@ -36,14 +41,15 @@ global_asm!{
 
 /// # SAFETY
 /// Should never be called directly by rust
+// #[cfg_attr(predicate, attr)]
 #[inline(never)]
 pub unsafe extern "C" fn start_main(argc:ffi::c_int, unbound_argv: *mut *mut ffi::c_char)->!{
-    unsafe extern "C" {
+    unsafe extern "C-unwind" {
         // Allows libc to call main as
         unsafe fn main(argc:ffi::c_int, argv: *mut *mut ffi::c_char)-> ffi::c_int;
         /// def in [`api::rt`]
         safe fn __rslibc_start_entrypoint_1(
-            mainfn:unsafe extern "C" fn(argc:ffi::c_int, argv: *mut *mut ffi::c_char)-> ffi::c_int,
+            mainfn:unsafe extern "C-unwind" fn(argc:ffi::c_int, argv: *mut *mut ffi::c_char)-> ffi::c_int,
             argv:*mut *mut ffi::c_char,
             argc:ffi::c_int
         )->!;
@@ -72,3 +78,10 @@ extern "C" fn __panic_impl(_i:&core::panic::PanicInfo)->!{
 fn panic_handler(info:&core::panic::PanicInfo) ->!{
     __panic_impl(info)
 }
+
+
+#[lang = "eh_personality"]
+#[linkage = "weak"]
+#[cfg(not(test))]
+#[doc(hidden)]
+pub extern "C" fn rust_eh_personality() {}

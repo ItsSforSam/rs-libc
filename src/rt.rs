@@ -12,7 +12,7 @@ type MainFn = extern "C" fn(argc:core::ffi::c_int, argv: *mut *mut core::ffi::c_
 //        This makes things...hard to update without breaking ABI
 // SAFETY: prefixed to avoid collisions
 #[unsafe(no_mangle)]
-unsafe extern "C" fn __rslibc_start_entrypoint_1(
+unsafe extern "C-unwind" fn __rslibc_start_entrypoint_1(
     mainfn:MainFn,
     argv:*mut *mut core::ffi::c_char,
     argc:core::ffi::c_int

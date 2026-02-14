@@ -6,6 +6,8 @@ publish.workspace = true
 
 [dependencies]
 cfg-if = "1.0.4"
+compiler_builtins = "0.1.160"
+
 [build-dependencies]
 
 [lib]
