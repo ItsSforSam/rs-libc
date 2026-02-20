@@ -1,2 +1,5 @@
 [toolchain]
+# If we update this, make sure to update meta/docs/target-spec-json-schema.json with `rustc -Z unstable-options --print target-spec-json`
 channel = "nightly-2025-11-14"
+# List of supported targets
+# targets = ["x86_64-unknown-linux-gnu","x86_64-unknown-freebsd"]

@@ -25,5 +25,13 @@
         "asm", "s", "S"
     ]
 
-}
+},
+"json.schemas": [
+    {
+        "fileMatch": [
+            "/custom-targets/*.json",
+        ],
+        "url": "https://raw.githubusercontent.com/ItsSforSam/rs-libc/refs/heads/main/meta/docs/target-spec-json-schema.json"
+    }
+]
 }
