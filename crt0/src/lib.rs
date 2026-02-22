@@ -3,38 +3,53 @@
 #![no_std]
 #![feature(
     linkage,
-    lang_items
+    lang_items,
+    abi_custom,
 )]
 #![expect(internal_features,reason="To shut rust up about no eh_personality")]
 
 use core::ffi;
 use core::arch::global_asm;
 
-#[cfg(target_arch = "x86")]
-global_asm!{
-    
-    ".globl _start"
-
-    "_start:"
-    
-    ,
-    options(att_syntax)
-}
+#[unsafe(no_mangle)]
+#[unsafe(naked)]
 #[cfg(target_arch = "x86_64")]
-global_asm!{
-    ".globl _start",
-    ".type _start, @function",
-    "_start:",
-        "endbr64",
-        
+unsafe extern "custom" fn _start() ->!{
+    core::arch::naked_asm!{
+        "pop %rdi",
         "call {libc_start}",
-        
         // If it returns (it shouldn't just invoke an invalid instruction)
         // Set's do hlt right here which is valid but requires ring0 access
         "hlt",
-    // Exits program
-    libc_start = sym start_main, // Allows name mangling and not exporting it out of obj file unnecessarily
+        libc_start = sym start_main,
+        
+    }
 }
+
+// #[cfg(target_arch = "x86")]
+// global_asm!{
+    
+//     ".globl _start"
+
+//     "_start:"
+    
+//     ,
+//     options(att_syntax)
+// }
+// #[cfg(target_arch = "x86_64")]
+// global_asm!{
+//     ".globl _start",
+//     ".type _start, @function",
+//     "_start:",
+//         "endbr64",
+        
+//         "call {libc_start}",
+        
+
+//         "hlt",
+//     // Exits program
+//     libc_start = sym start_main, // Allows name mangling and not exporting it out of obj file unnecessarily
+// }
 
 
 
@@ -58,22 +73,15 @@ pub unsafe extern "C" fn start_main(argc:ffi::c_int, unbound_argv: *mut *mut ffi
     
 }
 
-
-
-
-#[unsafe(no_mangle)]
-#[linkage = "weak"] // We want to weakly link to rslibc. It it doesn't link properly, just hang
-extern "C" fn __panic_impl(_i:&core::panic::PanicInfo)->!{
-    //@TODO: Crash in some way. It's preferred to make it evident it panicked
-    loop{
-        core::hint::spin_loop();
-    }
+//@TODO: Have PanicInfo equivalent be ffi safe
+unsafe extern "C" {
+    safe fn __panic_impl(i:&core::panic::PanicInfo)->!;
 }
 
 
 #[cfg_attr(not(test),panic_handler)]
 // #[cfg_attr(test)]
-#[linkage = "weak"]
+#[cfg_attr(not(test),expect(dead_code, reason="tests use their own panic handler"))]
 #[inline(never)] // Have it so it can be breakpoint in a debugger
 fn panic_handler(info:&core::panic::PanicInfo) ->!{
     __panic_impl(info)
