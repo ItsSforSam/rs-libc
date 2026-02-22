@@ -13,7 +13,6 @@
 #![allow(internal_features,reason="To shut rust up about no eh_personality")]
 
 use core::ffi;
-
 unsafe extern "custom"{
     /// The true starting point of the program
     /// 
@@ -28,6 +27,7 @@ unsafe extern "custom"{
     /// 
     /// [`rslibc_start_entrypoint`]: __rslibc_start_entrypoint_1
     unsafe fn _start();
+
 }
 
 // #[cfg(target_arch = "x86")]
@@ -50,6 +50,7 @@ unsafe extern "custom"{
 //         "call {libc_start}",
         
 
+<<<<<<< HEAD
 //         "hlt",
 //     // Exits program
 //     libc_start = sym start_main, // Allows name mangling and not exporting it out of obj file unnecessarily
@@ -75,6 +76,8 @@ unsafe extern "C-unwind" {
 /// This simply allows [_start] to call the function and do any additional start up which is architecture agnostic.
 /// But this is mostly handed off to [`rslibc_start_entrypoint`]
 /// 
+=======
+>>>>>>> 96ad231 (have _start be a naked function)
 /// # SAFETY
 /// Should never be called directly by rust
 /// 
@@ -92,6 +95,7 @@ pub unsafe extern "C" fn start_main(argc:ffi::c_int, unbound_argv: *mut *mut ffi
 }
 
 //@TODO: Have PanicInfo equivalent be ffi safe
+<<<<<<< HEAD
 #[linkage="weak"] 
 extern "C"  fn __panic_impl(_i:&core::panic::PanicInfo)->!{
     // SAFETY: while is UB, the actual behaver is defined on platforms. Segfault.
@@ -104,11 +108,20 @@ extern "C"  fn __panic_impl(_i:&core::panic::PanicInfo)->!{
     let _:u8 = unsafe {core::ptr::read_volatile(core::ptr::null())};
     // SAFETY: Should segfault
     unsafe {core::hint::unreachable_unchecked()}
+=======
+unsafe extern "C" {
+    safe fn __panic_impl(i:&core::panic::PanicInfo)->!;
+>>>>>>> 96ad231 (have _start be a naked function)
 }
 
 
 #[cfg_attr(not(test),panic_handler)]
+<<<<<<< HEAD
 #[cfg_attr(test,expect(dead_code, reason="tests use their own panic handler"))]
+=======
+// #[cfg_attr(test)]
+#[cfg_attr(not(test),expect(dead_code, reason="tests use their own panic handler"))]
+>>>>>>> 96ad231 (have _start be a naked function)
 #[inline(never)] // Have it so it can be breakpoint in a debugger
 fn panic_handler(info:&core::panic::PanicInfo) ->!{
     __panic_impl(info)
