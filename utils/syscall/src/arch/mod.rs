@@ -1,3 +1,4 @@
+#[expect(missing_docs, reason = "Lots of redundancy")]
 #[cfg(target_arch="x86_64")]
 #[path ="./x86-64.rs"]
 pub mod current;

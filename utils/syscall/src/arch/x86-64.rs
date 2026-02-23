@@ -161,4 +161,15 @@ pub unsafe fn syscall6(mut sc:long, p1:long, p2:long,p3:long,p4:long,p5:long,p6:
     sc
 }
 
-
+/// Equivalent to C's `-value`
+pub(crate) fn neg(value:long)->long{
+    let mut ret:long = value;
+    // SAFETY: valid asm
+    unsafe {core::arch::asm!{
+        "neg {}",
+        inout(reg) ret,
+        options(preserves_flags,nomem,pure,nostack,)
+    }};
+    
+    ret
+}

@@ -1,0 +1,12 @@
+[package]
+name = "rslibc-syscall"
+description = "Syscalls system used by rslibc"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[dependencies]
+api-sys = {path = "../../api-sys"}
+[lints]
+workspace = true

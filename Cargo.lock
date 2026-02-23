@@ -18,6 +18,7 @@ dependencies = [
  "api-sys",
  "bitflags",
  "cfg-if",
+ "rslibc-syscall",
 ]
 
 [[package]]
@@ -299,6 +300,13 @@ dependencies = [
  "memory",
  "unwinding",
  "version_check",
+]
+
+[[package]]
+name = "rslibc-syscall"
+version = "0.0.0"
+dependencies = [
+ "api-sys",
 ]
 
 [[package]]

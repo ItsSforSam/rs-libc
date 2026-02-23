@@ -20,9 +20,10 @@
 pub extern crate api_sys as sys;
 #[no_link]
 extern crate cfg_if;
+#[doc(inline)]
+pub use syscall::syscall;
 #[macro_use]
 pub mod macros;
-pub mod arch;
 pub mod errno;
 pub mod io;
 pub mod mman;
