@@ -1,5 +1,4 @@
-use core::{ffi::c_int, fmt::{Display, Write}};
-
+use core::{ffi::c_int, fmt::Display};
 
 
 
@@ -10,6 +9,15 @@ macro_rules! def {
         $e:ident => $desc:literal
     
         ),*) => {
+        /// An error number which is returned from most syscalls.
+        /// 
+        /// From most syscall wrappers (in C land) if it returns `-1` or NULL. A successful call to a function
+        /// may change the thread-local variable.
+        /// 
+        /// For more info read the [errno(3)] man page
+        /// 
+        /// 
+        /// [errno(3)]: https://man.archlinux.org/man/errno.3.en
         #[derive(Debug,PartialEq,Eq,Clone)]
         #[repr(u32)]
         #[non_exhaustive]
@@ -61,17 +69,33 @@ macro_rules! def {
                 self as ::core::ffi::c_int
             }
         }
-
+        mod err_str{
+            $(
+                // SAFETY: We won't have any interior nul bytes and we add a null terminator at the end
+                pub static $e: &'static ::core::ffi::CStr = unsafe {::core::ffi::CStr::from_bytes_with_nul_unchecked(::core::concat!($desc,'\0').as_bytes())};
+            )*
+             
+        }
+        
         
         impl Errno{
+            /// A description of the errno value
+            /// 
+            /// The exact strings defined are not defined and should not be realied upon as it can be different
+            /// regarding the locale
+            #[doc(alias = "strerror")]
             pub const fn as_str(&self) -> &'static str{
                 use Errno::*;
                 match self{
                     $(
-                        &$e => $desc,
+                        
+                        &$e => match err_str::$e.to_str(){
+                            Ok(v) => v,
+                            // This is due to unwrap_unchecked in const context is nightly currently
+                            // SAFETY: Is valid UTF-8 string, as is constructed from valid UTF-8 string
+                            Err(_) => unsafe {::core::hint::unreachable_unchecked()} 
+                        }
                     )*
-                    // SAFETY: 
-                    // _ =>unsafe {::core::hint::unreachable_unchecked()}
                 }
             }
         }
@@ -246,8 +270,6 @@ pub static ERRNO:Cell<c_int> = Cell::new(0);
 extern "C" fn __get_errno_ptr() -> *mut c_int{
     ERRNO.as_ptr()  
 }
-
-// Kinda ironic that
 
 /// Similar to [`TryFromIntError`][core::num::TryFromIntError] but can be constructed from
 /// within the crate, while the core impl cannot be constructed from outside the crate
