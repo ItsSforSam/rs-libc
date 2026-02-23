@@ -3,6 +3,7 @@
         "bindgen",
         "bitflags",
         "cfgs",
+        "Errno",
         "globl",
         "libc",
         "MMAP",
