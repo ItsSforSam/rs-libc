@@ -13,9 +13,10 @@ type MainFn = extern "C" fn(argc:core::ffi::c_int, argv: *mut *mut core::ffi::c_
 // SAFETY: prefixed to avoid collisions
 #[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn __rslibc_start_entrypoint_1(
-    mainfn:MainFn,
+    mainfn:&MainFn,
     argv:*mut *mut core::ffi::c_char,
-    argc:core::ffi::c_int
+    argc:core::ffi::c_int,
+    envp:*mut *mut core::ffi::c_char
 )->!{
     // @TODO: initialize the c runtime
     api::quick_exit(mainfn(argc,argv))
