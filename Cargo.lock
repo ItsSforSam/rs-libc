@@ -108,10 +108,6 @@ checksum = "6376049cfa92c0aa8b9ac95fae22184b981c658208d4ed8a1dc553cd83612895"
 [[package]]
 name = "crt0"
 version = "0.0.0"
-dependencies = [
- "cfg-if",
- "compiler_builtins",
-]
 
 [[package]]
 name = "either"
