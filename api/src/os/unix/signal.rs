@@ -21,7 +21,7 @@ pub struct sigaction{
     sa_flags: c_int,
     sa_restorer: Option<extern "C" fn()>
 }
-// #[cfg(target_arch = "x86")]
+#[cfg(target_arch = "x86")]
 #[repr(C)]
 union UnionSigAction{
     sa_handler:SAHandler,
@@ -90,15 +90,33 @@ pub enum SigActionHandler {
     // Default signal handler for a given signal
     #[default]
     Default,
-    // Ignore
+    // Ignore the signal
     Ignore,
     Handler(SAHandler),
     Action(SASigaction)
 
 }
 #[repr(C)]
+#[derive(Debug)]
+#[non_exhaustive] // temporary and just because we don't have all the fields
 pub struct siginfo{
- // @TODO
+    /// The signal number
+    #[doc(alias = "si_signo")]
+    pub signo: c_int,
+    #[doc(alias = "si_errno")]
+    pub errno: c_int,
+    /// The signal code
+    #[doc(alias = "si_code")]
+    pub code:c_int,
+    // copied from
+    // https://docs.rs/libc/latest/src/libc/unix/linux_like/linux/gnu/b64/x86_64/mod.rs.html#17-316
+    /// The raw bytes of the structure, as some of them are unions or just not defined, for example
+    /// Like <code>si_addr</code> (memory location of fault) won't be defined if [`SIGINT`] was what was raised
+    /// 
+    // [`SIGINT`]: crate::errno::Errno::SIGINT
+    _pad: [c_int;29],
+    // This part could've been to lock out due to pad being exposed via pub
+    _align: [u64;0]
 }
 #[derive(Debug)]
 pub struct sigset_t{
