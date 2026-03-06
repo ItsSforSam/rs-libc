@@ -1,6 +1,8 @@
 //! FFI which contains abstractions for the underlying OS
 //! 
 //! Similar to the [`std::ffi`]
+//! 
+//! [`std::ffi`]: <https://doc.rust-lang.org/std/ffi/index.html>
 // #![expect(ambiguous_glob_reexports, reason = "We will be defining our own module")]
 pub use core::ffi::*;
 #[cfg(feature="alloc")]
