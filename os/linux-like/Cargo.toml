@@ -1,0 +1,11 @@
+[package]
+name = "rslibc-linux-like"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[dependencies]
+syscall = {path = "../../utils/syscall",package = "rslibc-syscall"}
+[lints]
+workspace = true
