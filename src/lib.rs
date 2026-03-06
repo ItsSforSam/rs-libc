@@ -37,14 +37,14 @@ pub unsafe extern "C" fn __libc_main()->!{
         // If this hangs then it's being set correctly
         // as if a entry isn't set (and `_start` doesn't exist)
         // it sets to NULL, which just seg faults.
-        // BUT cannot use todo!() as that just panics, which also panics (sometimes it currently uses core::intrinsics::abort()
+        // BUT cannot use todo!() as that just panics, which just calls abort (which is fine)
         // which doesn't have a stable result)
         //@TODO: print version info and metadata
         core::hint::spin_loop();
     }
 }
-
-
+/// Same as C's exit function
+#[expect(unreachable_code, reason = "marked with todo")]
 pub fn exit()->!{
     todo!("Implement exit function with atexit");
     cfg_if::cfg_if!{
