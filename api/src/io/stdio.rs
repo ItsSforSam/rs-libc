@@ -42,7 +42,7 @@ impl File{
     /// 
     /// [`EBADF`]: crate::errno::Errno::EBADF
     #[doc(alias = "fdopen")]
-    pub const unsafe fn from_fd_unchecked(fd:crate::os::fd::RawFd,mode:Mode)->Self{
+    pub const unsafe fn from_fd_unchecked(fd:crate::os::fd::RawFd,_mode:Mode)->Self{
         File {
             // SAFETY: caller guarantees this a valid file descriptor
             fd: unsafe { OwnedFd::from_raw_fd(fd)},
@@ -84,6 +84,7 @@ impl File{
     /// [`EBADF`]: crate::errno::Errno::EBADF
     /// [`EMFILE`]: crate::errno::Errno::EMFILE
     /// [`ENOMEM`]: crate::errno::Errno::ENOMEM
+    /// [`from_fd_unchecked`]: File::from_fd_unchecked
     pub fn try_clone(&self) ->crate::Result<Self>{
 
         todo!("Get dup definition")
@@ -333,7 +334,7 @@ macro_rules! define_outs {
         $(
         
             // Safety: used for stdout, stderr,stdin, which aren't actual files
-            static $id: File =  unsafe { File::from_fd_unchecked($fd, Mode::$mode)};
+            pub static $id: File =  unsafe { File::from_fd_unchecked($fd, Mode::$mode)};
 
         )*
     };
