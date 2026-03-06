@@ -10,7 +10,7 @@
 // as removing this doesn't cause any warning, so what is it doing to access TLS?
 #[unsafe(no_mangle)]
 #[doc(hidden)]
-pub unsafe extern "C" fn __tls_get_addr(v:usize){
+pub unsafe extern "C" fn __tls_get_addr(_v:usize){
     todo!("No implementation of TLS is available right now")
     
 }
