@@ -1,8 +1,10 @@
 {
     "cSpell.words": [
+        "auxv",
         "bindgen",
         "bitflags",
         "cfgs",
+        "ENOMEM",
         "Errno",
         "globl",
         "libc",
