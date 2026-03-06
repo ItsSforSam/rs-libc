@@ -18,9 +18,9 @@ use crate::{errno::Errno};
 /// While syscalls are generally "safe" if passed correct non malformed parameters, depending on the syscall tho can be unsafe in certain contexts. See [signal-safety(7)]
 /// 
 /// 
-/// [syscall(2)]      : https://man.archlinux.org/man/syscall.2.en
-/// [signal-safety(7)]: https://man.archlinux.org/man/signal-safety.7.en
-/// [errno(3)]        : https://man.archlinux.org/man/errno.3.en
+/// [syscall(2)]      : <https://man.archlinux.org/man/syscall.2.en>
+/// [signal-safety(7)]: <https://man.archlinux.org/man/signal-safety.7.en>
+/// [errno(3)]        : <https://man.archlinux.org/man/errno.3.en>
 #[macro_export]
 macro_rules! syscall {
     ($sc:ident) => {
