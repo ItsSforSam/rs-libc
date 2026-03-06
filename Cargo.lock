@@ -100,6 +100,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "common"
+version = "0.0.0"
+dependencies = [
+ "cfg-if",
+ "rslibc-syscall",
+]
+
+[[package]]
 name = "compiler_builtins"
 version = "0.1.160"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -296,6 +304,13 @@ dependencies = [
  "memory",
  "unwinding",
  "version_check",
+]
+
+[[package]]
+name = "rslibc-linux-like"
+version = "0.0.0"
+dependencies = [
+ "rslibc-syscall",
 ]
 
 [[package]]

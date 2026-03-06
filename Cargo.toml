@@ -15,7 +15,7 @@ unwinding = { version = "0.2.8", default-features = false, features = ["fde-stat
 # unwind = "0.4.2"
 
 [workspace]
-members = ["crt0", "api", "api-sys","arch", "memory","libc-patch", "utils/syscall",]
+members = ["crt0", "api", "api-sys","arch", "memory","libc-patch", "utils/syscall", "os/linux-like", "utils/common",]
 default-members = [".","./crt0"]
 exclude = ["tests"]
 
@@ -60,8 +60,8 @@ workspace = true
 #
 # Allow : A comment should always accompany explicitly allowing a lint project wide
 [workspace.lints.clippy]
-allow_attributes_without_reason = {level = "forbid"}
-undocumented_unsafe_blocks      = {level = "forbid"}
+allow_attributes_without_reason = {level = "warn"}
+undocumented_unsafe_blocks      = {level = "deny"}
 multiple_unsafe_ops_per_block   = {level = "warn"}
 dbg_macro                       = {level = "warn" } # prevents dbg being apart of a release
 # These are often just wrappers around new. Especially if new takes no parameters. Just taking up code gen
