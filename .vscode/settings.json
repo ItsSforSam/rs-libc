@@ -9,6 +9,7 @@
         "globl",
         "libc",
         "MMAP",
+        "pthread",
         "pthreads",
         "repr",
         "rslibc",
