@@ -1,0 +1,14 @@
+[package]
+name = "rslibc-threads"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[dependencies]
+lock_api = { version = "0.4.14", default-features = false }
+rslibc-syscall = {path = "../utils/syscall"}
+# TODO: Use our own mutexes by using linux kernel's mutex 
+spin = { version = "0.10.0", default-features = false, features = ["rwlock", "lock_api"] }
+[lints]
+workspace = true
