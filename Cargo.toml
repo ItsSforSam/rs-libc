@@ -15,7 +15,7 @@ unwinding = { version = "0.2.8", default-features = false, features = ["fde-stat
 # unwind = "0.4.2"
 rslibc-threads = {path = "threads", optional = true}
 [workspace]
-members = ["crt0", "api", "api-sys","arch", "memory","libc-patch", "utils/syscall", "os/linux-like", "threads",]
+members = ["crt0", "api", "api-sys","arch", "memory","libc-patch", "utils/syscall", "os/linux-like", "threads","utils/common"]
 default-members = [".","./crt0"]
 exclude = ["tests"]
 

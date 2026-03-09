@@ -309,6 +309,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "rslibc-common"
+version = "0.0.0"
+dependencies = [
+ "rslibc-syscall",
+]
+
+[[package]]
 name = "rslibc-linux-like"
 version = "0.0.0"
 dependencies = [
