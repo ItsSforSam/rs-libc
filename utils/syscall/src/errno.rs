@@ -1,3 +1,12 @@
+//! An error number which is returned from most syscalls.
+//! 
+//! From most syscall wrappers (in C land) if it returns `-1` or NULL. A successful call to a function
+//! may change the thread-local variable.
+//! 
+//! For more info read the [errno(3)] man page
+//! 
+//! 
+//! [errno(3)]: https://man.archlinux.org/man/errno.3.en
 use core::{ffi::c_int, fmt::Display};
 
 
@@ -9,22 +18,15 @@ macro_rules! def {
         $e:ident => $desc:literal
     
         ),*) => {
-        /// An error number which is returned from most syscalls.
-        /// 
-        /// From most syscall wrappers (in C land) if it returns `-1` or NULL. A successful call to a function
-        /// may change the thread-local variable.
-        /// 
-        /// For more info read the [errno(3)] man page
-        /// 
-        /// 
-        /// [errno(3)]: https://man.archlinux.org/man/errno.3.en
+        /// Represents a Errno value
+        /// See [module level documentation](self)
         #[derive(Debug,PartialEq,Eq,Clone)]
-        #[repr(u32)]
+        #[repr(i32)] // c_int
         #[non_exhaustive]
         pub enum Errno{
             $(
                 #[doc = $desc]
-                $e = ::api_sys::$e,
+                $e = ::api_sys::$e as c_int,
             )*
         }
 
