@@ -10,7 +10,8 @@ pub type RawFd = core::ffi::c_int;
 
 // https://doc.rust-lang.org/stable/src/std/os/fd/owned.rs.html#26
 // supports the niche of not being a negative one (an error)
-type ValidRawFd = core::num::niche_types::NotAllOnes<RawFd>;
+#[doc(hidden)]
+pub type ValidRawFd = core::num::niche_types::NotAllOnes<RawFd>;
 
 /// An owned file descriptor
 /// 
