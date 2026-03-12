@@ -12,3 +12,6 @@ rslibc-syscall = {path = "../utils/syscall"}
 spin = { version = "0.10.0", default-features = false, features = ["rwlock", "lock_api"] }
 [lints]
 workspace = true
+
+[lib]
+harness = false
