@@ -1,7 +1,12 @@
+//! Common code that is architecture-agnostic
+//! 
+//! This contains the [`syscall!()`] macro
+//! 
+//! [`syscall!()`]:crate::syscall
 #![allow(unsafe_op_in_unsafe_fn, reason ="these are simply reexporting them under the C abi")]
 #![allow(clippy::missing_safety_doc, reason ="they are wrappers for the most part")]
 #![allow(missing_docs, reason ="wrapper around rust functions to be exported")]
-use core::ffi::{c_long as long,c_ulong as ulong};
+use core::ffi::c_long as long;
 use crate::{errno::Errno};
 
 /// A macro which calls a syscall on the system.
@@ -18,9 +23,10 @@ use crate::{errno::Errno};
 /// While syscalls are generally "safe" if passed correct non malformed parameters, depending on the syscall tho can be unsafe in certain contexts. See [signal-safety(7)]
 /// 
 /// 
-/// [syscall(2)]      : <https://man.archlinux.org/man/syscall.2.en>
+/// 
+/// [syscall(2)]: <https://man.archlinux.org/man/syscall.2.en>
 /// [signal-safety(7)]: <https://man.archlinux.org/man/signal-safety.7.en>
-/// [errno(3)]        : <https://man.archlinux.org/man/errno.3.en>
+/// [errno(3)]: <https://man.archlinux.org/man/errno.3.en>
 #[macro_export]
 macro_rules! syscall {
     ($sc:ident) => {
@@ -72,6 +78,7 @@ pub fn __syscall_ret(ret:long)->Result<long,crate::errno::Errno>{
 /// }
 /// ```
 #[macro_export]
+#[doc(hidden)]
 macro_rules! __syscall_convert_to_Result {
     ($e:expr) => {
         match $e {
