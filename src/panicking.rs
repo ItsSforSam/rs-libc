@@ -17,7 +17,7 @@ static PANIC_COUNT:Cell<u8> = Cell::new(0);
 /// and not officially supported
 #[unsafe(no_mangle)]
 #[doc(hidden)]
-pub extern "C" fn __panic_impl(_i:&PanicInfo)->!{
+pub extern "C-unwind" fn __panic_impl(_i:&PanicInfo)->!{
     // No data races occur on thread
     if PANIC_COUNT.get() != 0{
         api::abort();

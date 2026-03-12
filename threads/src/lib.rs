@@ -28,10 +28,19 @@ pub struct PThread{
 // The only real data race is with errno which we try to keep it per thread
 unsafe impl Sync for PThread {}
 unsafe impl Send for PThread {}
-impl PThread{
+impl PThread {
+
+    pub fn current()->Option<&'static mut Self>{
+        // SAFETY: correct offset
+        let p = unsafe { crate::arch::current::get_tp(offset_of!(Self,pself))} as *mut Self;
+        if p.is_null(){
+            return None;
+        }
+        todo!()
+    }
     /// Constructs a the pthread struct from a
     pub fn from_thread_id(thread_id:pid_t)->Self{
-        PThread { thread_id, errno: core::cell::UnsafeCell::new(0) }
+        PThread { thread_id, errno: core::cell::UnsafeCell::new(0),_marker:core::marker::PhantomData, pself:core::ptr::null_mut()}
     }
     /// Get the errno value of the given pthread
     /// 

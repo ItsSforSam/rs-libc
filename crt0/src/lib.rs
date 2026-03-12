@@ -105,7 +105,10 @@ extern "C"  fn __panic_impl(_i:&core::panic::PanicInfo)->!{
     // SAFETY: Should segfault
     unsafe {core::hint::unreachable_unchecked()}
 
-unsafe extern "C" {
+unsafe extern "C-unwind" {
+    // If it cannot be linked it will instead just dereference a NULL pointer and crash
+    // the program
+    #[linkage = "extern_weak"]
     safe fn __panic_impl(i:&core::panic::PanicInfo)->!;
 }
 
