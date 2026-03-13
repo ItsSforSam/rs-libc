@@ -91,24 +91,12 @@ pub unsafe extern "C" fn start_main(argc:ffi::c_int, unbound_argv: *mut *mut ffi
     
 }
 
-//@TODO: Have PanicInfo equivalent be ffi safe
-#[linkage="weak"] 
-extern "C"  fn __panic_impl(_i:&core::panic::PanicInfo)->!{
-    // SAFETY: while is UB, the actual behaver is defined on platforms. Segfault.
-    // and if you are able to read at null, we have other issues
-    // @TODO: mmap can techically be mapped at 0, making it valid.
-    // See: https://wiki.debian.org/mmap_min_addr
-    // Maybe have it automatically allow for it protecting a low range to prevent
-    //  NULL-pointer privilege escalation if possible, maybe with mprotect?
-    // But sometimes there are uses with using low ranges
-    let _:u8 = unsafe {core::ptr::read_volatile(core::ptr::null())};
-    // SAFETY: Should segfault
-    unsafe {core::hint::unreachable_unchecked()}
 
 unsafe extern "C-unwind" {
     // If it cannot be linked it will instead just dereference a NULL pointer and crash
     // the program
     #[linkage = "extern_weak"]
+    //@TODO: Have PanicInfo equivalent be ffi safe
     safe fn __panic_impl(i:&core::panic::PanicInfo)->!;
 }
 
