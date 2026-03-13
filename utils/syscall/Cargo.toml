@@ -8,5 +8,6 @@ license.workspace = true
 
 [dependencies]
 api-sys = {path = "../../api-sys"}
+cfg-if = "1.0.4"
 [lints]
 workspace = true
