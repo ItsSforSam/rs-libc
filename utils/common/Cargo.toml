@@ -6,6 +6,6 @@ license.workspace = true
 
 [dependencies]
 rslibc-syscall = {path = "../syscall"}
-
+log = {workspace = true}
 [features]
 threads = []
