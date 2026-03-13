@@ -1,35 +1,42 @@
 //! Handles the pthreads
 #![no_std]
+#![no_main]
 #![feature(
     unsafe_cell_access,
     negative_impls, // Used to guarantee
-    push_mut
 )]
-use core::ffi::{c_int, c_uint};
+pub mod arch;
+
+use core::{ffi::{c_int, c_uint}, mem::offset_of, ptr::NonNull};
 
 use rslibc_syscall::{errno::Errno, syscall};
 #[doc(inline)]
 use rslibc_syscall::sys::pid_t;
-use spin::RwLock;
-// We need an allocator!
-extern crate alloc;
-use alloc::vec::Vec;
-// static active pthreads
-static ACTIVE_THREADS:RwLock<Vec<PThread>> = RwLock::new(Vec::new());
 /// Posix Threads
 #[derive(Debug)]
+#[repr(C)] // The ABI is not stable, but we need stuff to be laid out properly
 pub struct PThread{
+    /// A self pointer referring to itself
+    pself: *mut Self,
+    /// The Thread ID (tid) 
+    /// 
+    /// This is refers to a specific thread 
     thread_id: pid_t,
     errno:core::cell::UnsafeCell<c_int>,
 
+    /// Used to mark special data
+    /// 
+    /// This needs to be pinned due to passing this pointer to C land
+    _marker: core::marker::PhantomData<core::marker::PhantomPinned>
     // _marker:core::
 }
-// SAFETY: we provide locking the best we can do
-// The only real data race is with errno which we try to keep it per thread
-unsafe impl Sync for PThread {}
-unsafe impl Send for PThread {}
+// // SAFETY: we provide locking the best we can do
+// // The only real data race is with errno which we try to keep it per thread
+// unsafe impl Sync for PThread {}
+// // SAFETY: Same as above
+// unsafe impl Send for PThread {}
 impl PThread {
-
+    /// Returns the current PThread struct
     pub fn current()->Option<&'static mut Self>{
         // SAFETY: correct offset
         let p = unsafe { crate::arch::current::get_tp(offset_of!(Self,pself))} as *mut Self;
@@ -68,14 +75,20 @@ impl PThread {
         // SAFETY: the value is received from a alive value
         unsafe {*self.errno.get()}
     }
-
+    /// Swap the errno value
+    /// 
+    /// Returns the old errno
     pub fn swap_errno(&self,err:Errno)->c_int{
         // SAFETY: PThreads can only if RWlock is unlocked to writes
         unsafe {self.errno.replace(err.into())}
     }
-    pub fn set_errno(&self){
-
+    /// Sets the errno 
+    pub fn set_errno(&self, err: Errno){
+        // SAFETY: 
+        unsafe {*self.errno.get() = err.into()}
     }
+    /// Returns the thread id for the specific PThread struct
+    #[must_use]
     pub fn tid(&self)->pid_t{
         self.thread_id
     }
@@ -87,8 +100,10 @@ impl core::cmp::PartialEq for PThread{
         return self.thread_id == other.thread_id;
     }
 }
-#[expect(clippy::multiple_unsafe_ops_per_block, reason="Included multiple unsafe comments")]
-fn get_tid()->pid_t{
+/// Retreave the current Thread ID
+#[expect(clippy::multiple_unsafe_ops_per_block, reason="Included multiple unsafe comments, and is used for the same expression")]
+#[must_use]
+pub fn get_tid()->pid_t{
     // SAFETY: valid parameters
     unsafe {syscall!(SYS_gettid)
         // SAFETY: this syscall is always successful
@@ -97,38 +112,11 @@ fn get_tid()->pid_t{
     }
 }
 
-fn thread_self<'t>()->&'t PThread{
-    let tid = get_tid();
-    let threads = ACTIVE_THREADS.upgradeable_read();
-    if threads.len() == 0{
-        let mut up = threads.upgrade();
-        return make_self(up);
-    }
-    for f in ACTIVE_THREADS.read().iter(){
-        if f.tid() == tid{
-            
-        }
-    }
-    todo!();
-
-    fn make_self(lock: spin::rwlock::RwLockUpgradableGuard<'_, alloc::vec::Vec<PThread>>)->&'static PThread{
-        let ret = PThread::from_thread_id(get_tid());
-        // lock.push(ret);
-        let mut data = lock.upgrade();
-        // let mut data = &*upg;
-        // PANICS IF goes over ISIZE::MAX (How many threads does one person need)
-        data.push(ret);
-        // {
-        // let mut i = lock.upgrade();
-        // i.push(ret);
-
-        // }
-        
-        if lock.len() == 1{
-            // SAFETY: We checked
-            return unsafe {lock.get(0).unwrap_unchecked()};
-        }
-        todo!()
-        // return 
-    }
+unsafe extern "C-unwind"{
+    #[expect(improper_ctypes, reason = "This library will be compiled together with base")]
+    safe fn __panic_impl(i:&core::panic::PanicInfo)->!;
+}
+#[panic_handler]
+fn panic_handler(i:&core::panic::PanicInfo)->!{
+    __panic_impl(i)
 }
