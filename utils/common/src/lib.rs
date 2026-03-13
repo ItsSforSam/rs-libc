@@ -38,7 +38,7 @@ unsafe impl core::marker::Sync  for Libc {}
 impl Libc{
     
     pub fn new()->Self{
-
+        todo!()
     }
     /// # SAFETY
     /// This pointer cannot be written to under any reason
