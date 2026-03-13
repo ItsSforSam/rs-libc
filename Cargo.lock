@@ -303,6 +303,7 @@ dependencies = [
  "cfg-if",
  "compiler_builtins",
  "memory",
+ "rslibc-common",
  "rslibc-threads",
  "unwinding",
  "version_check",
@@ -312,6 +313,7 @@ dependencies = [
 name = "rslibc-common"
 version = "0.0.0"
 dependencies = [
+ "log",
  "rslibc-syscall",
 ]
 
@@ -327,6 +329,7 @@ name = "rslibc-syscall"
 version = "0.0.0"
 dependencies = [
  "api-sys",
+ "cfg-if",
 ]
 
 [[package]]

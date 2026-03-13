@@ -14,6 +14,7 @@ memory        = {path = "memory"}
 unwinding = { version = "0.2.8", default-features = false, features = ["fde-static","unwinder"]}
 # unwind = "0.4.2"
 rslibc-threads = {path = "threads", optional = true}
+rslibc-common = {path = "utils/common"}
 [workspace]
 members = ["crt0", "api", "api-sys","arch", "memory","libc-patch", "utils/syscall", "os/linux-like", "threads","utils/common"]
 default-members = [".","./crt0"]
@@ -26,6 +27,10 @@ publish = false
 # BSD-3 Clause and GPL-2.0 are compatible.
 
 license = "BSD-3-Clause with LLVM-exception"
+
+[workspace.dependencies]
+# Internal logging
+log = {version = "0.4.29", default-features = false}
 
 [build-dependencies]
 cc = "1.2.46"
