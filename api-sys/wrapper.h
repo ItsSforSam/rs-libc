@@ -8,6 +8,7 @@
 #include <sys/syscall.h>
 #include <bits/syscall.h>
 #include <signal.h>
+#include <elf.h>
 
 // @TODO: for some reason this isn't being included properly in bits/syscall, even tho
 // on my system it has mmap2 supported.
