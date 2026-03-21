@@ -30,6 +30,24 @@ pub struct PThread{
     _marker: core::marker::PhantomData<core::marker::PhantomPinned>
     // _marker:core::
 }
+/// # SAFETY
+/// This will only be changed by [`__rsinit_thread_lib`] function
+static mut __PANIC_IMPL:Option<extern "Rust" fn(&core::panic::PanicInfo) ->!> = None;
+
+/// Initializes thread
+/// 
+/// # SAFETY
+/// 
+/// Shouldn't be called directly
+/// ABI can break as an internal function
+#[unsafe(no_mangle)]
+#[expect(improper_ctypes_definitions, reason ="It's fine dw about it")]
+pub unsafe extern "C" fn __rsinit_thread_lib(panic_handler:extern "Rust" fn(&core::panic::PanicInfo)->!){
+    // Safety: Caller guarantees safety guarantees are upheld
+    unsafe {__PANIC_IMPL = Some(panic_handler)}
+    todo!();
+}
+
 // // SAFETY: we provide locking the best we can do
 // // The only real data race is with errno which we try to keep it per thread
 // unsafe impl Sync for PThread {}
@@ -100,6 +118,7 @@ impl core::cmp::PartialEq for PThread{
         return self.thread_id == other.thread_id;
     }
 }
+
 /// Retreave the current Thread ID
 #[expect(clippy::multiple_unsafe_ops_per_block, reason="Included multiple unsafe comments, and is used for the same expression")]
 #[must_use]
@@ -112,11 +131,49 @@ pub fn get_tid()->pid_t{
     }
 }
 
-unsafe extern "C-unwind"{
-    #[expect(improper_ctypes, reason = "This library will be compiled together with base")]
-    safe fn __panic_impl(i:&core::panic::PanicInfo)->!;
-}
+
 #[panic_handler]
 fn panic_handler(i:&core::panic::PanicInfo)->!{
-    __panic_impl(i)
+    // SAFETY: No race condition can occur as this function is changed
+    // before threads are started
+    match unsafe {__PANIC_IMPL}{
+        Some(f)=>f(i),
+        None => loop{}
+    }
 }
+
+// fn thread_self<'t>()->&'t PThread{
+//     let tid = get_tid();
+//     let threads = ACTIVE_THREADS.upgradeable_read();
+//     if threads.len() == 0{
+//         let mut up = threads.upgrade();
+//         return make_self(up);
+//     }
+//     for f in ACTIVE_THREADS.read().iter(){
+//         if f.tid() == tid{
+            
+//         }
+//     }
+//     todo!();
+
+//     fn make_self(lock: spin::rwlock::RwLockUpgradableGuard<'_, alloc::vec::Vec<PThread>>)->&'static PThread{
+//         let ret = PThread::from_thread_id(get_tid());
+//         // lock.push(ret);
+//         let mut data = lock.upgrade();
+//         // let mut data = &*upg;
+//         // PANICS IF goes over ISIZE::MAX (How many threads does one person need)
+//         data.push(ret);
+//         // {
+//         // let mut i = lock.upgrade();
+//         // i.push(ret);
+
+//         // }
+        
+//         if lock.len() == 1{
+//             // SAFETY: We checked
+//             return unsafe {lock.get(0).unwrap_unchecked()};
+//         }
+//         todo!()
+//         // return 
+//     }
+// }
