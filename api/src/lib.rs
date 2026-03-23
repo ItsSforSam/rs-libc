@@ -84,11 +84,11 @@ pub fn getpid() -> i32{
     // SAFETY: getpid does not error
     unsafe {syscall!(SYS_getpid).unwrap_unchecked() as _}
 }
-pub fn kill(pid:i32, sig:c_int)->Result<c_int>{
+pub fn kill(pid:i32, sig:c_int)->Result<()>{
 
     // SAFETY: passes correct prams 
-   let v =unsafe { syscall!(SYS_kill,pid,sig)}?;
-   Ok(v as c_int)
+   let _ =unsafe { syscall!(SYS_kill,pid,sig)}?;
+   Ok(())
 }
 /// This is the equivalent to the [_exit(3p)]
 /// 
@@ -117,4 +117,7 @@ pub extern "C" fn quick_exit(status:c_int) -> !{
     todo!("Implement this for Windows target and other non-Unix"); // Should try to port to Windows as a whole
     // SAFETY: the syscall guarantees that the system has exited at this point
     unsafe {core::hint::unreachable_unchecked()}
+}
+pub fn raise(sig:c_int)->Result<()>{
+    kill(getpid(), sig)
 }
