@@ -6,7 +6,7 @@ publish.workspace = true
 
 [dependencies]
 # cfg-if = "1.0.4"
-# compiler_builtins = "0.1.160"
+compiler_builtins = {version = "0.1.160", features = ["mem","mangled-names"]}
 
 [lib]
 crate-type = ["staticlib"]
