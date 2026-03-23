@@ -13,6 +13,7 @@ use compiler_builtins as _; // Exposes required functions for C which are expect
 mod panicking;
 mod rt;
 pub mod env;
+pub mod stdio;
 // mod mem;
 extern crate alloc;
 #[no_link]
