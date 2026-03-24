@@ -1,9 +1,7 @@
 //! Allows for standard IO
-use core::sync::atomic::{AtomicBool, Ordering};
-
 use bitflags::bitflags;
 
-use crate::{os::fd::{AsRawFd, FromRawFd, OwnedFd, RawFd}, prelude::*, syscall};
+use crate::{prelude::*, syscall};
 
 
 
@@ -181,23 +179,6 @@ pub unsafe fn close_fd(fd: crate::os::fd::RawFd) -> crate::Result<()>{
     Ok(())
 }
 
-
-macro_rules! define_outs {
-    (
-        $( $id:ident($fd:literal) = $mode:ident ),*) => {
-        $(
-        
-            // Safety: used for stdout, stderr,stdin, which aren't actual files
-            pub static $id: File =  unsafe { File::from_fd_unchecked($fd, Mode::$mode)};
-
-        )*
-    };
-}
-define_outs!(
-    STDIN(0)=Read,
-    STDOUT(1)=Write,
-    STDERR(2)=Write
-);
 
 
 

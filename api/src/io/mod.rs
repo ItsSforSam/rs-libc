@@ -1,7 +1,7 @@
 //! IO operations
 //! 
 pub mod stdio;
-pub use stdio::{File,Mode};
+pub use stdio::{Mode};
 
 use crate::errno::Errno;
 

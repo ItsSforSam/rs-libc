@@ -1,6 +1,8 @@
 use core::{marker::{PhantomData, PhantomPinned}, mem::ManuallyDrop, sync::atomic::AtomicBool};
 
-
+use api::os::fd::{AsRawFd,OwnedFd,RawFd};
+use api::prelude::*;
+pub use api::io::stdio::*;
 
 // This is passed out thru the api
 // BUT only as a pointer with the 
@@ -36,22 +38,19 @@ impl File{
     /// 
     /// [`EBADF`]: crate::errno::Errno::EBADF
     #[doc(alias = "fdopen")]
-    pub const unsafe fn from_fd_unchecked(fd:crate::os::fd::RawFd)->Self{
+    pub const unsafe fn from_fd_unchecked(fd:RawFd)->Self{
         File {
             // SAFETY: caller guarantees this a valid file descriptor
-            fd: unsafe { OwnedFd::from_raw_fd(fd)},
+            fd: ManuallyDrop::new(unsafe { OwnedFd::from_raw_fd(fd)}),
             lock:AtomicBool::new(false),
             _marker:PhantomData
-            // mode,
-            // _pin:core::marker::PhantomPinned
-            // lock: AtomicBool::new(false)
             
         }
     }
-    pub fn write(&self,buf:&[u8])->crate::Result<usize>{
+    pub fn write(&self,buf:&[u8])->Result<usize>{
         self.fd.write(buf)
     }
-    pub fn read(&self,buf:& mut[u8])->crate::Result<usize>{
+    pub fn read(&self,buf:& mut[u8])->Result<usize>{
         self.fd.read(buf)
     }
     /// Gives back the file descriptor
@@ -59,7 +58,7 @@ impl File{
     /// Use of the getter is due to preventing accidental modification
     /// of the file descriptor, as it should not be changed
     pub const fn fd(&self)->RawFd{
-        self.fd.as_raw_fd()
+        (*self.fd).as_raw_fd()
     }
 
 
@@ -81,7 +80,7 @@ impl File{
     /// [`EMFILE`]: crate::errno::Errno::EMFILE
     /// [`ENOMEM`]: crate::errno::Errno::ENOMEM
     /// [`from_fd_unchecked`]: File::from_fd_unchecked
-    pub fn try_clone(&self) ->crate::Result<Self>{
+    pub fn try_clone(&self) ->Result<Self>{
 
         todo!("Get dup definition")
     }
@@ -90,22 +89,22 @@ impl File{
     /// # Errors
     /// Returns a tuple of `(Self,Errno)` so you can still operate on the File after a error as 
     /// 
-    ///  - EBADF  : fd is not a valid open file descriptor. This shouldn't occur in most cases
+    /// - EBADF  : fd is not a valid open file descriptor. This shouldn't occur in most cases
     /// - EINTR  : the close call was interrupted by a signal
     /// - EIO    : An I/O error occurred
     /// - ENOSPEC
     /// - EDQUOT : On NFS this will not occur until writes that occur after the quota exceeds
     /// 
-    pub fn close_explicitly(self)->Result<(),(Self,Errno)>{
+    pub fn close_explicitly(self)->core::result::Result<(),(Self,Errno)>{
         // This makes sure we don't drop the value twice, which can cause undefined behaver
         let f = core::mem::ManuallyDrop::new(self);
         // SAFETY: we own the file descriptor
-        match unsafe {close_fd((&f).fd())}{
+        match unsafe {api::io::stdio::close_fd(f.fd())}{
             Ok(_) => {
             
                 Ok(())
             },
-            Err(e) => Err((core::mem::ManuallyDrop::into_inner(f), e))
+            Err(e) => Err((ManuallyDrop::into_inner(f), e))
         }
     }
     
@@ -116,7 +115,7 @@ impl api::io::Read for File{
         self.fd.read(buf)
     }
 }
-impl crate::io::Write for File{
+impl api::io::Write for File{
     fn write(&mut self,buf: &[u8]) -> api::Result<usize> {
         self.fd.write(buf)
     }
@@ -129,7 +128,6 @@ impl crate::io::Write for File{
 impl Clone for File{
     /// Clones a file object
     fn clone(&self) -> Self {
-        
         match self.try_clone(){
             Ok(v) => v,
             Err(v) =>{
@@ -137,7 +135,10 @@ impl Clone for File{
                 match v{
                     // SAFETY: Should always be valid
                     EBADE => unsafe{core::hint::unreachable_unchecked()},
-                    ENOMEM => alloc::alloc::handle_alloc_error(Default::default()),
+                    // We don't have the layout of the internal Kernel structures, but we want to handle this with the 
+                    // alloc handler
+                    ENOMEM => alloc::alloc::handle_alloc_error(core::alloc::Layout::new::<()>()),
+                    
                     // SAFETY: No other errnos can be returned as it runs dup underneath
                     // https://man.archlinux.org/man/dup2.2.en#ERRORS
                     _ => unsafe{core::hint::unreachable_unchecked()}
@@ -147,3 +148,24 @@ impl Clone for File{
         }
     }
 }
+
+
+
+macro_rules! define_outs {
+    (
+        $( $id:ident($fd:literal)),*
+    
+    ) => {
+        $(
+        
+            // Safety: used for stdout, stderr,stdin, which aren't actual files
+            pub static $id: File =  unsafe { File::from_fd_unchecked($fd)};
+
+        )*
+    };
+}
+define_outs!(
+    STDIN(0),
+    STDOUT(1),
+    STDERR(2)
+);

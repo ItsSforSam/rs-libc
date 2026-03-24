@@ -7,7 +7,9 @@
     alloc_error_handler, 
     generic_atomic, // provides Atomics to be easier to read
     thread_local,   // used for errno and protection of double panic
-    likely_unlikely
+    likely_unlikely,
+    const_trait_impl, // Allows to impl traits in const fashion 
+    const_convert,    // And here use said traits in const scopes, ig. Yes we need both
 )]
 use compiler_builtins as _; // Exposes required functions for C which are expected, will raise linker errors
 mod panicking;
