@@ -4,7 +4,7 @@ use bitflags::bitflags;
 /// This will have mapped memory pointed at the the pointer with the length of len.
 /// If any pointers are used after this call it may cause a segfault, or you may get "lucky"
 /// and the memory gets mapped again so the addr is now valid, which can corrupt memory
-pub unsafe fn munmap(addr: *mut c_void,len:usize)->Result<(),crate::errno::Errno>{
+pub unsafe fn munmap(addr: *mut c_void,len:usize)->Result<()>{
     //SAFETY: calls with proper parameters of correct type
     unsafe {crate::syscall!(SYS_munmap, addr, len)}?;
     Ok(())
@@ -43,7 +43,7 @@ bitflags! {
         /// 
         /// To precisely control when updates are carried out, check out [msync(2)]
         /// 
-        /// [msync()]: https://man.archlinux.org/man/msync.2.en
+        /// [msync(2)]: https://man.archlinux.org/man/msync.2.en
         const Shared         = sys::MAP_SHARED as _;
         /// Same as [`Shared`] but in the case of any unknown flags
         /// 
@@ -111,7 +111,7 @@ pub fn mmap(
     flags: MMapFlags,
     fd: c_int,
     offset:c_long
-)->crate::Result<*mut c_void>{
+)->Result<*mut c_void>{
     
     //SAFETY: Puts the proper syscall with the proper parameters
     let v = unsafe {crate::syscall!(__mmap2_sys,

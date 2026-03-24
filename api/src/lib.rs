@@ -55,6 +55,7 @@ pub mod prelude{
     };
     pub use crate::{c_size_t,c_ssize_t};
     pub use crate::errno::{Errno,ERRNO};
+    pub use crate::Result;
 }
 use cfg_if::cfg_if;
 use prelude::*;
