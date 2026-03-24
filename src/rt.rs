@@ -87,6 +87,15 @@ pub unsafe extern "C-unwind" fn __libc_start_main(
 
 // #[link(name = "threadlib")]
 unsafe extern "C"{
+    
+
+    #[doc = include_str!("../meta/docs/abi-breakage.md")]
+    /// 
+    /// # SAFETY
+    /// 
+    /// If [`Some()`] then this should only be called once
+    /// 
+    /// 
     #[expect(improper_ctypes, reason ="We are interfacing with Rust-only")]
     #[linkage = "extern_weak"]
     static __rsinit_thread_lib:Option<extern "C" fn(panic_handler:extern "Rust" fn(&core::panic::PanicInfo)->!)->u8>;

@@ -34,7 +34,9 @@ pub struct PThread{
 /// This will only be changed by [`__rsinit_thread_lib`] function
 static mut __PANIC_IMPL:Option<extern "Rust" fn(&core::panic::PanicInfo) ->!> = None;
 
-/// Initializes thread
+/// Initializes threadlibs
+/// 
+#[doc = include_str!("../../meta/docs/abi-breakage.md")]
 /// 
 /// # SAFETY
 /// 
@@ -42,7 +44,7 @@ static mut __PANIC_IMPL:Option<extern "Rust" fn(&core::panic::PanicInfo) ->!> = 
 /// ABI can break as an internal function
 #[unsafe(no_mangle)]
 #[expect(improper_ctypes_definitions, reason ="It's fine dw about it")]
-pub unsafe extern "C" fn __rsinit_thread_lib(panic_handler:extern "Rust" fn(&core::panic::PanicInfo)->!){
+pub unsafe extern "C" fn __rsinit_thread_lib(panic_handler:extern "Rust" fn(&core::panic::PanicInfo)->!)->u8{
     // Safety: Caller guarantees safety guarantees are upheld
     unsafe {__PANIC_IMPL = Some(panic_handler)}
     todo!();

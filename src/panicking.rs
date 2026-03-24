@@ -10,11 +10,10 @@ use core::{cell::Cell, panic::PanicInfo};
 #[thread_local]
 static PANIC_COUNT:Cell<u8> = Cell::new(0);
 
-/// 
-/// 
-/// # ABI Breakage
-/// This function is marked for INTERNAL USE ONLY, which means any use of it can lead to breaking changes
-/// and not officially supported
+
+/// The panic handler for a given crate
+///  
+#[doc = include_str!("../meta/docs/abi-breakage.md")]
 #[unsafe(no_mangle)]
 #[doc(hidden)]
 pub extern "C-unwind" fn __panic_impl(_i:&PanicInfo)->!{

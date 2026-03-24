@@ -27,9 +27,7 @@ static ALLOCATOR: memory::Allocator = memory::Allocator::new();
 /// 
 /// This allows providing information like copyright, version info, and where to report bugs
 /// 
-/// # ABI Breakage
-/// This function is marked for INTERNAL USE ONLY, which means any use of it can lead to breaking changes
-/// and not officially supported
+#[doc = include_str!("../meta/docs/abi-breakage.md")]
 /// 
 /// # Safety
 /// This function won't produce undefined behavior when called, BUT is not supposed to be called explicitly, and is simply
