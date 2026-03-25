@@ -60,7 +60,7 @@ unsafe extern "custom" fn _start(){
 // (Reason here:https://stackoverflow.com/questions/61816297/what-is-int-3-really-supposed-to-do)
 // Which is useful to diagnosis if we did return
 // This will also reliably raise SIGTRAP signal if no debugger (which will help reduce)
-"int 3", // 
+"int3", 
             call_main = sym start_main,
             options(att_syntax)
         }
