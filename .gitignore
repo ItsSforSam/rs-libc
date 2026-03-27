@@ -24,3 +24,7 @@ target
 # Added by cargo
 
 /target
+
+# Out own binary directory
+# This is used when we have 
+/bin
