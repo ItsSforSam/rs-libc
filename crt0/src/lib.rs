@@ -6,14 +6,12 @@
 #![no_std]
 #![feature(
     linkage,
-    lang_items,
     abi_custom,
     cfg_select,
     core_intrinsics,
 )]
 // Only needed in test cfg, but we cannot optionally use features
-#![allow(internal_features,reason="To shut rust up about no eh_personality")]
-use compiler_builtins as _;
+#![allow(internal_features,reason="To allow use of core::intrinsics::abort in panic handler")]
 use core::ffi;
 // unsafe extern "custom"{
 //     
@@ -75,6 +73,7 @@ unsafe extern "custom" fn _start(){
 unsafe extern "C"{
     unsafe fn main(argc:ffi::c_int, argv: *mut *mut ffi::c_char)-> ffi::c_int;
 }
+#[link(name = "rs_libc")] // TODO: Have this properly work with just "C"
 unsafe extern "C-unwind" {
     /// defined in [`api::rt`]. This allows the actual runtime be spined up outside of crt0
     /// 
@@ -103,26 +102,38 @@ unsafe extern "C" fn start_main(argc:ffi::c_int, unbound_argv: *mut *mut ffi::c_
     
 }
 
-
+#[linkage="weak"]
 #[cfg_attr(not(test),panic_handler)]
-#[cfg_attr(test,expect(dead_code, reason="tests use their own panic handler"))]
-// #[cfg_attr(test)]
-#[cfg_attr(not(test),expect(dead_code, reason="tests use their own panic handler"))]
-#[cfg_attr(not(test),expect(unused_attributes, reason = "Not exporting the symbol??"))]
-#[inline(always)] // Find out why this code path was hit
+#[cfg_attr(test, expect(dead_code, reason = "No panic hander in tests"))]
 fn panic_handler(_:&core::panic::PanicInfo) ->!{
     core::intrinsics::abort();
 }
 
+/// This allows crt0 to compile and link correctly as for some reason, in static builds
+/// It refers to the mem builtin functions, despite core and use using the compiler_builtins crate
+macro_rules! stub_builtin {
+    (
+        $(pub fn $func:ident$prams:tt $(-> $output:ty)?;)+
+    ) => {
+        $(
+             
+            #[linkage = "weak"]
+            #[unsafe(no_mangle)]
+            #[doc(hidden)]
+            #[expect(unused, reason ="Meant to be overridden")]
+            pub unsafe extern "C" fn $func$prams $(-> $output)*{
+                ::core::unreachable!("{} not defined but is called", ::core::stringify!($func))
+            }
+        )*
+    };
+}
 
-#[lang = "eh_personality"]
-#[linkage = "weak"]
-#[cfg(not(test))]
-#[doc(hidden)]
-// If not defined it will produce linker error when trying to link
-// this staticlib 
-// Rust will depend on this even if panic strategy is set to "abort" and not "unwind"
-//https://users.rust-lang.org/t/unexpected-undefined-reference-to-rust-eh-personality-when-compiling-with-c-panic-abort-for-no-std-library/120311/2
-// We can't use it as it will fail to even compile this crate as we would need to do -Zbuild-std=core but with that we can't use compiler builtins external crate
-// with the sysroot one (that core depends on)
-extern "C" fn rust_eh_personality() {}
+stub_builtin!{
+    pub fn bcmp(s1:*const u8, s2:*const u8, n:usize) -> i32;
+    pub fn memcmp(dest: *mut u8, src: *const u8, n: usize) -> *mut u8;
+    pub fn memcpy(dest: *mut u8, src:*const u8,n:usize) -> *mut u8;
+    pub fn memmove(dest: *mut u8, src: *const u8, n: usize) -> *mut u8;
+    pub fn memset(dest: *mut u8, src:*const u8,n:usize);
+    pub fn strlen(s:*const core::ffi::c_char)->usize;
+    
+}
