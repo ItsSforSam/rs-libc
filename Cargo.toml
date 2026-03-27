@@ -87,5 +87,8 @@ single-use-lifetimes            = {level = "warn"}
 level = "deny" # Try to avoid typos
 check-cfg = [
 
-    'cfg(testing)'
+    'cfg(testing)',
+    # Used to determine if relocatable or not 
+    'cfg(linkage, values("static","dynamic"))',
 ]
+
