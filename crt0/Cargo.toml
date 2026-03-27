@@ -5,7 +5,6 @@ edition.workspace = true
 publish.workspace = true
 
 [dependencies]
-compiler_builtins = {version = "0.1.160", features = ["mem"]}
 
 [lib]
 crate-type = ["staticlib"]
