@@ -31,7 +31,7 @@ type MainFn = extern "C" fn(argc:c_int, argv: *mut *mut c_char)-> c_int;
 // SAFETY: prefixed to avoid collisions
 #[unsafe(no_mangle)]
 pub unsafe extern "C-unwind" fn __rslibc_start_entrypoint_1(
-    mainfn:*const MainFn,
+    mainfn:MainFn,
     argv:*mut *mut c_char,
     argc:c_int,
     envp:*mut *mut c_char
@@ -41,7 +41,7 @@ pub unsafe extern "C-unwind" fn __rslibc_start_entrypoint_1(
     // @TODO: initialize the c runtime, like the libc struct
     // get the auxiliary vector if available
     //safety: 
-    api::quick_exit(unsafe {(*mainfn)(argc,argv)})
+    api::quick_exit(mainfn(argc,argv))
 }
 /// A way to start up libc's runtime
 /// 
@@ -100,3 +100,25 @@ unsafe extern "C"{
     #[linkage = "extern_weak"]
     static __rsinit_thread_lib:Option<extern "C" fn(panic_handler:extern "Rust" fn(&core::panic::PanicInfo)->!)->u8>;
 }
+// #[cfg(any(miri,test))]
+// mod miri{
+//     // https://github.com/rust-lang/miri/?tab=readme-ov-file#entry-point-for-no-std-binaries
+//     #[unsafe(no_mangle)]
+//     fn miri_start(argc: isize, argv: *const *const u8)->u8{
+//         // SAFETY: Linux has envp be after arg and enviroment can be mutated
+//         let envp = unsafe {argv.add(argc as usize + 1)} as *mut *mut i8;
+//         // SAFETY: We are adhoc crt0
+//         unsafe {super::__rslibc_start_entrypoint_1(
+//             // This is valid, type, just the way we 
+//             (main as *const extern "C" fn()).cast(),
+//             // Just satisfying type as main doesn't take a const pointer like the the standard 
+//             argv as *mut *mut c_char,
+//             argc as c_int,
+//             envp
+//         )}
+//     }
+//     use core::ffi::*;
+//     extern "C" fn main(_argc:c_int, _argv: *mut *mut c_char)->c_int{
+//         0
+//     }
+// }
