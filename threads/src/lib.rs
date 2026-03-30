@@ -121,17 +121,6 @@ impl core::cmp::PartialEq for PThread{
     }
 }
 
-/// Retreave the current Thread ID
-#[expect(clippy::multiple_unsafe_ops_per_block, reason="Included multiple unsafe comments, and is used for the same expression")]
-#[must_use]
-pub fn get_tid()->pid_t{
-    // SAFETY: valid parameters
-    unsafe {syscall!(SYS_gettid)
-        // SAFETY: this syscall is always successful
-        .unwrap_unchecked() as pid_t
-    
-    }
-}
 
 
 #[panic_handler]
