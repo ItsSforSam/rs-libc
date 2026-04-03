@@ -1,21 +1,10 @@
 #[doc(inline)]
 pub use syscall::errno::*;
 use core::ffi::c_int;
-use core::cell::Cell;
 
-/// The errno of the current thread
-#[thread_local]
-pub static ERRNO:Cell<c_int> = Cell::new(0);
 
-/// This is aliased to C as the errno with
-/// 
-/// ```C
-/// #define errno {*__get_errno_ptr()}
-/// ```
-// SAFETY: double underscore prefix makes it impl specific and there shouldn't be and other libc loaded 
-#[unsafe(no_mangle)]
-extern "C" fn __get_errno_ptr() -> *mut c_int{
-    ERRNO.as_ptr()  
+unsafe extern "C" {
+    safe fn __get_errno_ptr() -> *mut c_int;
 }
 
 #[doc(hidden)]
@@ -34,7 +23,8 @@ impl<T> MapErr<T> for Result<T,Errno>{
         match self{
             Ok(v) => Some(v),
             Err(v) => {
-                ERRNO.set(v as i32);
+                // SAFETY: This function guarantees that it's returns to the thread local value (or a special value in single threaded apps)
+                unsafe {*__get_errno_ptr() = v as c_int;}
                 None
             }
 
