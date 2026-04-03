@@ -73,6 +73,7 @@ impl File{
             // We don't know what happened, and it should be caught by syscall macro
             return Err(Errno::EBADF);
         }
+        // SAFETY: valid file descriptor
         let mut fd = ManuallyDrop::new(unsafe {api::os::fd::OwnedFd::from_raw_fd_unchecked(fd_raw)});
 
         let mut r = File{
