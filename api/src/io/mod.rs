@@ -1,7 +1,10 @@
 //! IO operations
 //! 
 pub mod stdio;
+use core::ffi::{c_char, c_int};
+
 pub use stdio::{Mode};
+use syscall::syscall;
 
 use crate::errno::Errno;
 
@@ -54,4 +57,13 @@ pub trait Write {
 pub trait Read {
     /// Pull data from source and 
     fn read(&mut self, buf:&mut [u8])->crate::Result<usize>;
+}
+
+pub fn open(path:*const c_char,flags:c_int,mode:c_int)->crate::Result<c_int>{
+    //@TODO: use proper vaargs as mode_t is apart of it and ig optional
+    //@TODO: use openat for security
+    // SAFETY: valid args
+    let r = unsafe{syscall!(SYS_open,path,flags,mode)?};
+
+    Ok(r as c_int)
 }
