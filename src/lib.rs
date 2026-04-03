@@ -10,6 +10,7 @@
     likely_unlikely,
     const_trait_impl, // Allows to impl traits in const fashion 
     const_convert,    // And here use said traits in const scopes, ig. Yes we need both
+    negative_impls,
 )]
 use compiler_builtins as _; // Exposes required functions for C which are expected, will raise linker errors
 mod panicking;
@@ -33,6 +34,7 @@ static ALLOCATOR: memory::Allocator = memory::Allocator::new();
 /// This function won't produce undefined behavior when called, BUT is not supposed to be called explicitly, and is simply
 /// used as a entry point for dynamic libraries and shouldn't be called directly
 #[unsafe(no_mangle)]
+#[cfg(linkage = "dynamic")]
 pub unsafe extern "C" fn __libc_main()->!{
     loop{
         // If this hangs then it's being set correctly
