@@ -1,3 +1,5 @@
+use core::ptr::NonNull;
+
 use crate::prelude::*;
 use bitflags::bitflags;
 /// # SAFETY
@@ -105,17 +107,20 @@ bitflags! {
 
 
 pub fn mmap(
-    addr:*mut c_void,
+    addr:Option<NonNull<c_void>>,
     size: usize, // size_t
     proto:MMapProt,
     flags: MMapFlags,
     fd: c_int,
     offset:c_long
 )->Result<*mut c_void>{
-    
+    let a = match addr {
+        Some(v) => v.as_ptr(),
+        None => core::ptr::null_mut()
+    };
     //SAFETY: Puts the proper syscall with the proper parameters
     let v = unsafe {crate::syscall!(__mmap2_sys,
-                    addr,
+                    a,
                     size,
                     proto.bits(),
                     flags.bits(),
