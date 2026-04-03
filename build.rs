@@ -1,13 +1,47 @@
 #![allow(missing_docs,reason="build script")]
 use std::path::PathBuf;
-use std::env::var;
+use std::env::{var, var_os};
 use std::fs;
 
 fn main(){
     let out = PathBuf::from(var("OUT_DIR").unwrap());
-    println!("cargo::rustc-link-arg-cdylib=--entry=__libc_main");
+    // for (key, value) in std::env::vars_os(){
+    //      println!("{:?} = {:?}",key,value);
+    // }
+    if setup_dyn(){
+        println!("cargo::rustc-link-arg-cdylib=--entry=__libc_main");
+        println!("cargo::rustc-cfg=linkage=\"dynamic\"")
+    }else{
+        println!("cargo::rustc-cfg=linkage=\"static\"")
+    }
+    
+    
     fs::write(out.join("meta.rs"), gen_meta()).unwrap();
+}
 
+/// Get if this is dynamically linked
+fn setup_dyn()->bool{
+    // https://doc.rust-lang.org/rustc/codegen-options/index.html#relocation-model
+
+    
+    if var_os("CARGO_PRIMARY_PACKAGE").is_none(){
+        return false;
+    }
+    let is_dyn:bool = match var("CARGO_CFG_RELOCATION_MODEL").expect("cfg(relocation_model) missing").as_str() {
+        "static" => false,
+        "dynamic-no-pic" => false, // ??? only used on Darwin/Mac rarely
+        "pic" => true,
+        "pie" => false,
+        other => unimplemented!("Unresolved relocation model of `{}`",other)
+    };
+
+    // if var("CARGO_CFG_TARGET_FEATURE").unwrap().contains("crt-static"){
+
+    // }
+
+    return is_dyn;
+    
+    
 }
 // fn get_arch_path()->PathBuf{
 //     let arch = var("CARGO_CFG_TARGET_ARCH").expect("TARGET_ARCH cfg not set, are you running this via build script?");
