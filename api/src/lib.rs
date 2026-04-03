@@ -54,7 +54,7 @@ pub mod prelude{
         c_char,c_double,c_uint,c_int,c_ulong,c_long,c_void
     };
     pub use crate::{c_size_t,c_ssize_t};
-    pub use crate::errno::{Errno,ERRNO};
+    pub use crate::errno::{Errno};
     pub use crate::Result;
 }
 use cfg_if::cfg_if;
