@@ -1,7 +1,10 @@
 //! Allows for standard IO
+use core::{ffi::CStr, fmt, mem::MaybeUninit};
+
+use alloc::boxed::Box;
 use bitflags::bitflags;
 
-use crate::{prelude::*, syscall};
+use crate::{os::fd::RawFd, prelude::*, syscall};
 
 
 
@@ -167,8 +170,46 @@ bitflags! {
         const _ = !0;
     }
 }
+/// Represents the [`EINVAL`] for when the mode provided was invalid
+/// 
+/// 
+/// [`EINVAL`]: variant@syscall::errno::Errno::EINVAL
+#[derive(Debug,PartialEq, Eq, PartialOrd, Ord)]
+pub struct InvalidModeStr(Box<str>);
 
+impl From<InvalidModeStr> for syscall::errno::Errno{
 
+    fn from(_: InvalidModeStr) -> Self {
+        syscall::errno::Errno::EINVAL
+    }
+}
+impl fmt::Display for InvalidModeStr{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f,"Invalid arguments for mode string as {}",self.0)
+    }
+}
+impl core::error::Error for InvalidModeStr {}
+impl core::str::FromStr for Mode{
+    type Err = InvalidModeStr;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        // We are assuming that Box never fails, which, due to the small values, and you shouldn't
+        // be taking user input with your mode string (and if you are, you're stupid)
+        if !s.is_ascii(){ // all valid modes are ascii
+            return Err(InvalidModeStr(s.into()));
+        }
+        match s {
+            "r" => Ok(Mode::Read),
+            "w" => Ok(Mode::Write | Mode::Create | Mode::Truncate),
+            "a" => Ok(Mode::Write | Mode::Create | Mode::Append),
+            "r+"=> Ok(Mode::ReadWrite),
+            "w+"=>Ok(Mode::ReadWrite | Mode::Create | Mode::Truncate),
+            "a+"=>Ok(Mode::Write | Mode::Create | Mode::Append),
+            invalid => Err(InvalidModeStr(invalid.into()))
+        }
+
+        
+    }
+}
 /// Same as [close(2)]
 /// 
 /// # Safety
@@ -179,6 +220,34 @@ pub unsafe fn close_fd(fd: crate::os::fd::RawFd) -> crate::Result<()>{
     Ok(())
 }
 
+bitflags! {
+    #[repr(transparent)]
+    pub struct StatFlags: c_int{
+        const EmptyPath = sys::AT_EMPTY_PATH as c_int;
+        const NoAutoMount = sys::AT_NO_AUTOMOUNT as c_int;
+        const NoFollowSymink = sys::AT_SYMLINK_NOFOLLOW as c_int;
+        #[doc(hidden)]
+        const _ = !0;
+    }
+}
 
+/// Calls to [stat(2)]
+/// 
+/// [stat(2)]: https://man.archlinux.org/man/stat.2.en
+pub fn stat(path: &CStr, statbuf:&mut MaybeUninit<api_sys::stat>) -> crate::Result<()>{
+    // SAFETY: We use valid prams
+    unsafe {syscall!(SYS_newfstatat, sys::AT_FDCWD, path.as_ptr(),statbuf.as_mut_ptr(),0)?};
+    Ok(())
+}
 
+pub fn fstat(fd:RawFd,  statbuf:&mut MaybeUninit<api_sys::stat> ) -> crate::Result<()>{
+    // SAFETY: We use valid prams
+    unsafe {syscall!(SYS_newfstatat, c"".as_ptr(),statbuf.as_mut_ptr(),StatFlags::EmptyPath.bits())}?;
+    Ok(())
+}
 
+pub fn fstatat(dirfd:RawFd,path: &CStr,statbuf:&mut MaybeUninit<api_sys::stat>,flags:StatFlags) -> crate::Result<()>{
+    // SAFETY: We use valid prams
+    unsafe {syscall!(SYS_newfstatat, path.as_ptr(),statbuf.as_mut_ptr(),flags.bits())}?;
+    Ok(())
+}
