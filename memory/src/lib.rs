@@ -81,7 +81,7 @@ impl Allocator{
     /// Does not pass the allocator, just do the raw allocation
     fn alloc_inner(size:usize) -> *mut c_void{
         mmap(
-            0 as _, // Null basically tell the Kernel "idc you chose!"
+            None, // Null basically tell the Kernel "idc you chose!"
              size,
              MMapProt::Read | MMapProt::Write, 
              MMapFlags::Anonymous | MMapFlags::Private, 
